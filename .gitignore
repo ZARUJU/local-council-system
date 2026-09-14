@@ -11,3 +11,4 @@ wheels/
 
 # Collector runtime state
 /var/
+/_ref

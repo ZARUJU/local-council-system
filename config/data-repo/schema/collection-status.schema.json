@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local-council.example/schema/collection-status.schema.json",
+  "title": "local-council-data collection status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "municipalityCode", "lastSuccessfulSync"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "municipalityCode": {
+      "type": "string",
+      "pattern": "^[0-9]{6}$"
+    },
+    "lastSuccessfulSync": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

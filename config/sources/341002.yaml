@@ -1,0 +1,26 @@
+municipalityCode: "341002"
+municipalityName: "広島市"
+prefecture: "広島県"
+adapter: "hiroshima-voices"
+
+source:
+  system: "voices"
+  baseUrl: "https://hiroshima.gijiroku.com"
+  minutesBaseUrl: "https://hiroshima.gijiroku.com/voices"
+
+# 初期は 2025 年以降。本会議と委員会閲覧画面の個別委員会を対象にする。
+collection:
+  initialFrom: "2025-01-01"
+  lookbackDays: 30
+  earliestYear: 2025
+
+# 公開会議録CGIはブラウザの iframe と同じ経路。
+# 負荷を抑えるため間隔を空け、開発中はディスクキャッシュを使う。
+http:
+  minIntervalSeconds: 3
+  timeoutSeconds: 30
+  cache: true
+
+# data リポジトリへ直接書く。commit / PR はしない。
+export:
+  dataRoot: "../local-council-data"

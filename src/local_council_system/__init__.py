@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from local-council-system!")
+from local_council_system.cli import main

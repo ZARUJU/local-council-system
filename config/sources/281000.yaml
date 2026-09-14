@@ -1,0 +1,22 @@
+municipalityCode: "281000"
+municipalityName: "神戸市"
+prefecture: "兵庫県"
+adapter: "kobe-dbsr"
+
+source:
+  system: "dbsr"
+  baseUrl: "https://www.city.kobe.hyogo.dbsr.jp"
+  minutesBaseUrl: "https://www.city.kobe.hyogo.dbsr.jp"
+
+collection:
+  initialFrom: "2025-01-01"
+  lookbackDays: 30
+  earliestYear: 2025
+
+http:
+  minIntervalSeconds: 3
+  timeoutSeconds: 30
+  cache: true
+
+export:
+  dataRoot: "../local-council-data"

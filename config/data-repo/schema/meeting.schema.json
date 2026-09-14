@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local-council.example/schema/meeting.schema.json",
+  "title": "local-council-data canonical meeting",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "meeting", "speeches", "source"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "meeting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "municipalityCode",
+        "sourceIdentity",
+        "session",
+        "name",
+        "date",
+        "issue"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "municipalityCode": {
+          "type": "string",
+          "pattern": "^[0-9]{6}$"
+        },
+        "sourceIdentity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["system", "meetingId"],
+          "properties": {
+            "system": { "type": "string", "minLength": 1 },
+            "meetingId": { "type": "string", "minLength": 1 }
+          }
+        },
+        "session": {
+          "type": ["string", "null"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "issue": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        }
+      }
+    },
+    "speeches": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "order",
+          "sourceIdentity",
+          "speaker",
+          "text",
+          "startPage",
+          "sourceURL"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sourceIdentity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["speechId"],
+            "properties": {
+              "speechId": {
+                "type": ["string", "null"]
+              }
+            }
+          },
+          "speaker": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "yomi", "group", "position", "role"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "yomi": { "type": ["string", "null"] },
+              "group": { "type": ["string", "null"] },
+              "position": { "type": ["string", "null"] },
+              "role": { "type": ["string", "null"] }
+            }
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startPage": {
+            "type": ["integer", "null"]
+          },
+          "sourceURL": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "pdfURL"],
+      "properties": {
+        "url": { "type": "string", "minLength": 1 },
+        "pdfURL": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
