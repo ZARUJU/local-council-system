@@ -1,110 +1,79 @@
-# 地方議会会議録データ仕様書
+# データモデル
+
+この文書は、会議録データをどの意味で表現し、Git / SQLite / API の各層へどう載せるかを定義します。
+
+関連:
+
+- システム全体の流れ → [architecture.md](architecture.md)
+- 公開 ID の生成規則 → [id.md](id.md)
+- HTTP API の契約 → [api.md](api.md)
+- 文書の読み順と優先関係 → [README.md](README.md)
 
 ## 目次
 
-1. 目的
-2. 基本原則
-3. データフロー
-4. Canonical Data Model
-5. ID仕様
-6. Git保存形式
-7. ディレクトリ構成
-8. JSONファイル仕様
-9. SQLite格納形式
-10. SQLiteテーブル定義
-11. APIレスポンス形式
-12. 各形式間のマッピング
-13. NULL・欠損値
-14. 正規化規則
-15. Git運用上の規則
-16. Schema Version
-17. データ更新
-18. 設計上の責務
+- [目的](#目的)
+- [基本原則](#基本原則)
+- [Canonical Data Model](#canonical-data-model)
+- [公開 ID](#公開-id)
+- [Git 保存形式](#git-保存形式)
+- [SQLite 格納形式](#sqlite-格納形式)
+- [API との対応](#api-との対応)
+- [NULL・欠損値](#null欠損値)
+- [正規化規則](#正規化規則)
+- [データ更新](#データ更新)
 
-# 1. 目的
+## 目的
 
-本仕様書は、地方議会会議録データについて以下を定義する。
+地方議会会議録データについて次を定義する。
 
-1. システム全体で共有するCanonical Data Model
-2. Gitリポジトリ上の永続保存形式
-3. 検索およびAPI提供に利用するSQLite格納形式
-4. API利用者へ提供するレスポンス形式
+1. システム全体で共有する Canonical Data Model
+2. Git リポジトリ上の永続保存形式
+3. 検索および API 提供に利用する SQLite 格納形式
+4. API 利用者へ提供するレスポンス形式との対応
 
-Git上のJSONをデータの正本とする。
+Git 上の JSON をデータの正本とする。SQLite は正本ではなく、Git 上のデータから再生成可能な検索・配信用データベースとする。
 
-SQLiteは正本ではなく、Git上のデータから再生成可能な検索・配信用データベースとする。
+## 基本原則
 
-# 2. 基本原則
-
-## 2.1 Source of Truth
-
-データの正本はGitリポジトリに保存されたCanonical JSONとする。
+### Source of Truth
 
 ```text
 Canonical JSON = Source of Truth
+SQLite         = Derived Data
+API Response   = View
 ```
 
-SQLiteは派生データとする。
+SQLite データベースを削除しても、Git 上の Canonical JSON から完全に再構築できなければならない。
+
+Collector、Parser および Normalizer が検索用 SQLite を直接正本として更新する設計は採用しない。収集・変換のための作業用 SQLite は許可する。作業用 SQLite は正本ではなく、API および Database Builder の入力にもならない。
+
+### 意味の一貫性
+
+保存形式・SQLite 形式・API 形式では構造や粒度を変えてよい。ただし、同一フィールドが表す意味を変更してはならない。
+
+例: Canonical の `speech.id`、SQLite の `speeches.id`、API の `speechID` は同一の識別子を表す。
+
+### 各層の責務
 
 ```text
-SQLite = Derived Data
+Canonical = 意味
+Git       = 永続化
+SQLite    = 検索
+API       = 配布
 ```
 
-APIレスポンスも派生データとする。
+| 層 | 定義すること |
+| --- | --- |
+| Canonical Data Model | 地方議会会議録というデータをどう表現するか |
+| Git 保存形式 | データをどの単位・どのファイル構成で永続保存するか |
+| SQLite 格納形式 | データをどのように検索しやすく配置するか。ここでの SQLite は検索用データベースを指す。Collector の作業用 SQLite は正本でも検索用 DB でもない |
+| API レスポンス形式 | 外部利用者にどの粒度でデータを提供するか |
 
-```text
-API Response = View
-```
+各層は同一の事実を表すが、それぞれの用途に応じてデータの粒度および重複度を変更する。
 
-## 2.2 再生成可能性
+## Canonical Data Model
 
-SQLiteデータベースを削除しても、Git上のCanonical JSONから完全に再構築できなければならない。
-
-## 2.3 意味の一貫性
-
-保存形式・SQLite形式・API形式では構造や粒度を変えてよい。
-
-ただし、同一フィールドが表す意味を変更してはならない。
-
-例:
-
-```text
-Canonical speech.id
-SQLite speeches.id
-API speechID
-```
-
-は同一の識別子を表す。
-
-# 3. データフロー
-
-```text
-地方議会Webサイト
-       ↓
-   Collector
-       ↓
-     Parser
-       ↓
-   Normalizer
-       ↓
-    Validator
-       ↓
-Canonical JSON
-       ↓
-      Git
-       ↓
-     Loader
-       ↓
-     SQLite
-       ↓
-       API
-```
-
-Collector、ParserおよびNormalizerがSQLiteを直接正本として更新する設計は採用しない。
-
-# 4. Canonical Data Model
-
-主要エンティティは以下とする。
+主要エンティティは次とする。
 
 ```text
 Municipality
@@ -114,21 +83,19 @@ Speaker
 Source
 ```
 
-関係は次のとおり。
+関係:
 
 ```text
 Municipality
      │
      └── Meeting
             │
+            ├── Source
             └── Speech
-                   │
                    └── Speaker
 ```
 
-MeetingはSource情報を持つ。
-
-# 4.1 Municipality
+### Municipality
 
 自治体を表す。
 
@@ -138,35 +105,26 @@ name
 prefecture
 ```
 
-### code
+#### code
 
-全国地方公共団体コード。
+全国地方公共団体コード。型は `string`。数字として扱わず文字列とする。
 
-型:
-
-```text
-string
-```
-
-数字として扱わず文字列とする。
-
-### name
+#### name
 
 自治体正式名称。
 
-### prefecture
+#### prefecture
 
 都道府県名。
 
-# 4.2 Meeting
+### Meeting
 
-1件の会議録を表す。
-
-推奨フィールド:
+1 件の会議録を表す。
 
 ```text
 id
 municipalityCode
+sourceIdentity
 session
 name
 date
@@ -175,32 +133,30 @@ speeches
 source
 ```
 
-### id
+#### id
 
-会議を一意に識別するID。
+会議を一意に識別する公開 ID。生成規則は [id.md](id.md) を参照する。
 
-### municipalityCode
+#### municipalityCode
 
-Municipality.codeへの参照。
+`Municipality.code` への参照。
 
-### session
+#### sourceIdentity
 
-自治体が公表する会期等の名称。
+公開 ID の生成材料となった収集元識別子。公開 ID そのものではない。詳細は [id.md](id.md) を参照する。
 
-例:
+#### session
+
+自治体が公表する会期等の名称。取得できない場合は null を許容する。
 
 ```text
 令和8年第3回定例会
 令和8年第1回臨時会
 ```
 
-取得できない場合はnullを許容する。
-
-### name
+#### name
 
 会議名。
-
-例:
 
 ```text
 本会議
@@ -209,72 +165,57 @@ Municipality.codeへの参照。
 予算特別委員会
 ```
 
-### date
+#### date
 
-開催日。
+開催日。形式は `YYYY-MM-DD`。
 
-形式:
+#### issue
 
-```text
-YYYY-MM-DD
-```
+原資料に明確な号数が存在する場合の号数。存在しない場合は null。
 
-### issue
+### Speech
 
-原資料に明確な号数が存在する場合の号数。
-
-存在しない場合はnull。
-
-# 4.3 Speech
-
-1件の発言を表す。
-
-推奨フィールド:
+1 件の発言を表す。
 
 ```text
 id
 order
+sourceIdentity
 speaker
 text
 startPage
 sourceURL
 ```
 
-### id
+#### id
 
-発言を一意に識別するID。
+発言を一意に識別する公開 ID。生成規則は [id.md](id.md) を参照する。
 
-### order
+#### order
 
-会議中の発言順。
+会議中の発言順。整数とする。原資料に明示的な発言番号が存在しない場合は、Parser が本文上の順序から採番する。
 
-整数とする。
+#### sourceIdentity
 
-原資料に明示的な発言番号が存在しない場合は、Parserが本文上の順序から採番する。
+公開 ID の生成材料。詳細は [id.md](id.md) を参照する。
 
-### speaker
+#### speaker
 
-Speakerオブジェクト。
+Speaker オブジェクト。
 
-### text
+#### text
 
-発言本文。
+発言本文。原則として原資料の本文を保持する。
 
-原則として原資料の本文を保持する。
+#### startPage
 
-### startPage
+PDF 等でページ番号が取得可能な場合に設定する。取得できない場合は null。
 
-PDF等でページ番号が取得可能な場合に設定する。
+#### sourceURL
 
-取得できない場合はnull。
+発言単位の URL が存在する場合に設定する。存在しない場合は null。
 
-### sourceURL
-
-発言単位のURLが存在する場合に設定する。
-
-存在しない場合はnull。
-
-# 4.4 Speaker
+### Speaker
 
 ```text
 name
@@ -284,47 +225,29 @@ position
 role
 ```
 
-すべての項目について、`name`以外はnullを許容する。
+`name` 以外は null を許容する。
 
-### name
+#### name
 
 原資料上の発言者名。
 
-### yomi
+#### yomi
 
 読み仮名。
 
-### group
+#### group
 
 会派・所属。
 
-### position
+#### position
 
-肩書き。
+肩書き。例: 市長、議員、教育長、議長、副市長。
 
-例:
+#### role
 
-```text
-市長
-議員
-教育長
-議長
-副市長
-```
+その他の発言上の役割。例: 参考人、公述人、説明員。
 
-### role
-
-その他の発言上の役割。
-
-例:
-
-```text
-参考人
-公述人
-説明員
-```
-
-# 4.5 Source
+### Source
 
 原典情報を保持する。
 
@@ -333,7 +256,9 @@ url
 pdfURL
 ```
 
-必要に応じて将来以下を追加可能とする。
+Canonical JSON は原資料の所在を保持する。HTML や PDF のバイト列そのものは v0.1 では正本へ保存しない。
+
+必要に応じて将来次を追加可能とする。
 
 ```text
 provider
@@ -342,67 +267,35 @@ retrievedAt
 contentHash
 ```
 
-ただし、取得のたびに値が変わるメタデータを各Canonical JSONへ無条件に書き込み、Git差分を発生させることは避ける。
+ただし、取得のたびに値が変わるメタデータを各 Canonical JSON へ無条件に書き込み、Git 差分を発生させることは避ける。
 
-# 5. ID仕様
+## 公開 ID
 
-IDは収集元のURLやDB内部の連番に依存しない安定した値とする。
+公開 ID は収集元の URL や DB 内部の連番に依存しない、決定論的な UUIDv5 とする。
 
-v0.1では以下を推奨形式とする。
+生成規則、フォールバック、変更してよい場合／いけない場合は [id.md](id.md) が定義する。本文書では Canonical 上のフィールド名と、他形式への対応だけを扱う。
 
-## 5.1 Meeting ID
+- Canonical: `meeting.id` / `speech.id`
+- SQLite: `meetings.id` / `speeches.id`（公開 ID を TEXT で保持する。内部整数主キーを別に持つ場合は [id.md](id.md) を参照）
+- API: `meetingID` / `speechID`
 
-```text
-{municipalityCode}-{date}-{sequence}
-```
+ID は一度公開した後、原則として変更しない。
 
-例:
+## Git 保存形式
 
-```text
-341002-20260910-001
-```
+原則として 1 ファイル = 1 会議 とする。
 
-`sequence`は同一自治体・同一開催日に複数会議が存在する場合の識別番号とする。
+理由:
 
-3桁のゼロ埋めとする。
+- 1 会議内の発言を自然な単位でまとめられる
+- 自治体情報や会議情報の重複を減らせる
+- Git diff を会議単位で確認できる
+- Parser の再実行結果を比較しやすい
+- 1 発言 1 ファイルよりファイル数を抑えられる
 
-## 5.2 Speech ID
+ファイルパスは Git 上の配置であり、公開 ID そのものではない。公開 ID は UUIDv5 であり、ファイル名から一意に復元する必要はない。一方、同一会議を常に同じパスへ書くため、パスは自治体・開催日・同日内の識別番号から決定論的に決める。
 
-```text
-{meetingID}-{speechOrder}
-```
-
-例:
-
-```text
-341002-20260910-001-0042
-```
-
-`speechOrder`は4桁ゼロ埋めとする。
-
-IDは一度公開した後、原則として変更しない。
-
-# 6. Git保存形式
-
-原則として、
-
-```text
-1ファイル = 1会議
-```
-
-とする。
-
-理由は以下のとおり。
-
-* 1会議内の発言を自然な単位でまとめられる
-* 自治体情報や会議情報の重複を減らせる
-* Git diffを会議単位で確認できる
-* Parserの再実行結果を比較しやすい
-* 1発言1ファイルよりファイル数を抑えられる
-
-# 7. ディレクトリ構成
-
-推奨構成:
+### ディレクトリ構成
 
 ```text
 local-council-data/
@@ -421,44 +314,27 @@ local-council-data/
                 └── 2026-09-10-002.json
 ```
 
-第1階層:
+| 階層 | 内容 |
+| --- | --- |
+| 第 1 階層 | 都道府県コード |
+| 第 2 階層 | 全国地方公共団体コード |
+| 第 3 階層 | 西暦年 |
+| ファイル名 | `YYYY-MM-DD-NNN.json` |
 
-```text
-都道府県コード
-```
+### JSON ファイル仕様
 
-第2階層:
-
-```text
-全国地方公共団体コード
-```
-
-第3階層:
-
-```text
-西暦年
-```
-
-ファイル名:
-
-```text
-YYYY-MM-DD-NNN.json
-```
-
-とする。
-
-Meeting IDとファイルパスの対応を可能な限り決定論的にする。
-
-# 8. JSONファイル仕様
-
-例:
+Municipality の名称および都道府県名は原則として各会議ファイルに重複保存しない。`municipalityCode` から `master/municipalities.json` を参照する。
 
 ```json
 {
   "schemaVersion": "1.0",
   "meeting": {
-    "id": "341002-20260910-001",
+    "id": "9f55c8d4-73e4-5e17-a5b7-8c4d12e8d311",
     "municipalityCode": "341002",
+    "sourceIdentity": {
+      "system": "voices",
+      "meetingId": "20260910001"
+    },
     "session": "令和8年第3回定例会",
     "name": "本会議",
     "date": "2026-09-10",
@@ -466,8 +342,11 @@ Meeting IDとファイルパスの対応を可能な限り決定論的にする�
   },
   "speeches": [
     {
-      "id": "341002-20260910-001-0001",
+      "id": "b1c2d3e4-f5a6-5789-8bcd-ef0123456789",
       "order": 1,
+      "sourceIdentity": {
+        "speechId": "10001"
+      },
       "speaker": {
         "name": "山田太郎",
         "yomi": null,
@@ -487,17 +366,30 @@ Meeting IDとファイルパスの対応を可能な限り決定論的にする�
 }
 ```
 
-Municipalityの名称および都道府県名は原則として各会議ファイルに重複保存しない。
+### Git 運用上の規則
 
-`municipalityCode`から`master/municipalities.json`を参照する。
+JSON は次を満たすものとする。
 
-# 9. SQLite格納形式
+- UTF-8
+- BOM なし
+- LF 改行
+- 末尾改行あり
+- 整形済み JSON
+- インデント幅を固定
+- キー順を固定
+- 不必要なタイムスタンプを生成しない
 
-SQLiteは検索効率を優先する。
+同じ入力データに対して Parser を再実行した場合、意味上の変更がなければ同一 JSON が生成されることを目標とする。出力は可能な限り決定論的でなければならない。
 
-Canonical JSONと完全に同一の構造を維持する必要はない。
+### Schema Version
 
-以下のように正規化する。
+各会議 JSON のルートに `"schemaVersion": "1.0"` を持つ。
+
+Semantic Versioning に準じ、少なくとも `1.0` / `1.1` / `2.0` の考え方を用いる。後方互換性を失う変更では Major Version を更新する（例: `1.x` → `2.0`）。フィールドの追加など後方互換な変更では Minor Version を更新できる。
+
+## SQLite 格納形式
+
+SQLite は検索効率を優先する。Canonical JSON と完全に同一の構造を維持する必要はない。
 
 ```text
 municipalities
@@ -505,13 +397,17 @@ meetings
 speeches
 ```
 
-Speaker専用テーブルはv0.1では作成しない。
+Speaker 専用テーブルは v0.1 では作成しない。人物同定を行わず「その発言時点に記録された発言者情報」を Speech の属性として扱うためである。
 
-理由は、人物同定を行わず「その発言時点に記録された発言者情報」をSpeechの属性として扱うためである。
+v0.1 では発言本文検索を通常の `LIKE` で実装する。全文検索エンジンまたは FTS5 は必須としない。
 
-# 10. SQLiteテーブル定義
+```sql
+SELECT *
+FROM speeches
+WHERE speech_text LIKE '%' || :keyword || '%';
+```
 
-## 10.1 municipalities
+### municipalities
 
 ```sql
 CREATE TABLE municipalities (
@@ -521,7 +417,7 @@ CREATE TABLE municipalities (
 );
 ```
 
-## 10.2 meetings
+### meetings
 
 ```sql
 CREATE TABLE meetings (
@@ -553,7 +449,9 @@ CREATE INDEX idx_meetings_name
 ON meetings(name);
 ```
 
-## 10.3 speeches
+`meetings.id` には Canonical の公開 ID（UUIDv5）を格納する。SQLite 内部の整数主キーを別に持つことは禁止しない。その場合の推奨は [id.md](id.md) を参照する。
+
+### speeches
 
 ```sql
 CREATE TABLE speeches (
@@ -593,278 +491,65 @@ CREATE INDEX idx_speeches_speaker
 ON speeches(speaker_name);
 ```
 
-v0.1では発言本文検索を通常の`LIKE`で実装する。
+## API との対応
 
-例:
+API レスポンス形式の契約は [api.md](api.md) が定義する。本節は Canonical / SQLite / API のフィールド対応のみを扱う。
 
-```sql
-SELECT *
-FROM speeches
-WHERE speech_text LIKE '%' || :keyword || '%';
-```
+API では Canonical Model を利用目的に応じて非正規化する。Canonical JSON では `Meeting → Speech[]` だが、発言単位 API では Speech に Meeting と Municipality を付けて 1 レコードとして返す。自治体情報や会議情報を発言レコードへ重複して含めることを許容する。
 
-全文検索エンジンまたはFTS5は必須としない。
-
-# 11. APIレスポンス形式
-
-APIではCanonical Modelを利用目的に応じて非正規化する。
-
-例えばCanonical JSONでは、
-
-```text
-Meeting
-  └── Speech[]
-```
-
-となっているが、発言単位APIでは、
-
-```text
-Speech
-+ Meeting
-+ Municipality
-```
-
-を1レコードとして返す。
-
-例:
-
-```json
-{
-  "speechID": "341002-20260910-001-0001",
-  "meetingID": "341002-20260910-001",
-
-  "prefecture": "広島県",
-  "municipality": "広島市",
-  "municipalityCode": "341002",
-
-  "session": "令和8年第3回定例会",
-  "nameOfMeeting": "本会議",
-  "date": "2026-09-10",
-
-  "speechOrder": 1,
-
-  "speaker": "山田太郎",
-  "speakerYomi": null,
-  "speakerGroup": "○○会",
-  "speakerPosition": "議員",
-  "speakerRole": null,
-
-  "speech": "学校給食について質問します。",
-
-  "startPage": null,
-  "speechURL": null,
-
-  "meetingURL": "https://example.jp/meeting/123",
-  "pdfURL": null
-}
-```
-
-# 12. 各形式間のマッピング
-
-| Canonical                  | SQLite                       | API                |
-| -------------------------- | ---------------------------- | ------------------ |
-| `meeting.id`               | `meetings.id`                | `meetingID`        |
+| Canonical | SQLite | API |
+| --- | --- | --- |
+| `meeting.id` | `meetings.id` | `meetingID` |
 | `meeting.municipalityCode` | `meetings.municipality_code` | `municipalityCode` |
-| `meeting.session`          | `meetings.session`           | `session`          |
-| `meeting.name`             | `meetings.name`              | `nameOfMeeting`    |
-| `meeting.date`             | `meetings.date`              | `date`             |
-| `speech.id`                | `speeches.id`                | `speechID`         |
-| `speech.order`             | `speeches.speech_order`      | `speechOrder`      |
-| `speech.speaker.name`      | `speeches.speaker_name`      | `speaker`          |
-| `speech.speaker.yomi`      | `speeches.speaker_yomi`      | `speakerYomi`      |
-| `speech.speaker.group`     | `speeches.speaker_group`     | `speakerGroup`     |
-| `speech.speaker.position`  | `speeches.speaker_position`  | `speakerPosition`  |
-| `speech.speaker.role`      | `speeches.speaker_role`      | `speakerRole`      |
-| `speech.text`              | `speeches.speech_text`       | `speech`           |
-| `speech.startPage`         | `speeches.start_page`        | `startPage`        |
-| `speech.sourceURL`         | `speeches.source_url`        | `speechURL`        |
-| `source.url`               | `meetings.source_url`        | `meetingURL`       |
-| `source.pdfURL`            | `meetings.pdf_url`           | `pdfURL`           |
+| `meeting.session` | `meetings.session` | `session` |
+| `meeting.name` | `meetings.name` | `nameOfMeeting` |
+| `meeting.date` | `meetings.date` | `date` |
+| `speech.id` | `speeches.id` | `speechID` |
+| `speech.order` | `speeches.speech_order` | `speechOrder` |
+| `speech.speaker.name` | `speeches.speaker_name` | `speaker` |
+| `speech.speaker.yomi` | `speeches.speaker_yomi` | `speakerYomi` |
+| `speech.speaker.group` | `speeches.speaker_group` | `speakerGroup` |
+| `speech.speaker.position` | `speeches.speaker_position` | `speakerPosition` |
+| `speech.speaker.role` | `speeches.speaker_role` | `speakerRole` |
+| `speech.text` | `speeches.speech_text` | `speech` |
+| `speech.startPage` | `speeches.start_page` | `startPage` |
+| `speech.sourceURL` | `speeches.source_url` | `speechURL` |
+| `source.url` | `meetings.source_url` | `meetingURL` |
+| `source.pdfURL` | `meetings.pdf_url` | `pdfURL` |
 
-APIの、
+API の `prefecture` および `municipality` は、SQLite 上で `municipalities` を JOIN して生成する。`sourceIdentity` は原則として通常の検索 API レスポンスには含めない。
 
-```text
-prefecture
-municipality
-```
+## NULL・欠損値
 
-は、SQLite上で`municipalities`をJOINして生成する。
+収集元に項目が存在しない場合は、推測値を作成せず `null` とする。空文字列による欠損表現は使用しない。
 
-# 13. NULL・欠損値
+悪い例: `"speakerPosition": ""`
 
-収集元に項目が存在しない場合は、推測値を作成せず`null`とする。
+良い例: `"speakerPosition": null`
 
-例えば、
+ただし、本文そのものが空であることが原典上意味を持つ特殊ケースについては別途 Parser 仕様で定義する。
 
-```json
-{
-  "speaker": {
-    "name": "山田太郎",
-    "yomi": null,
-    "group": null,
-    "position": null,
-    "role": null
-  }
-}
-```
+## 正規化規則
 
-とする。
+原則として原資料に存在する情報を保持する。過度な文字列正規化を行わない。
 
-空文字列による欠損表現は使用しない。
-
-悪い例:
-
-```json
-"speakerPosition": ""
-```
-
-良い例:
-
-```json
-"speakerPosition": null
-```
-
-ただし、本文そのものが空であることが原典上意味を持つ特殊ケースについては別途Parser仕様で定義する。
-
-# 14. 正規化規則
-
-原則として原資料に存在する情報を保持する。
-
-過度な文字列正規化を行わない。
-
-特に発言本文については、検索の都合で原文を書き換えない。
-
-検索用に正規化文字列が必要になった場合は、Canonical値とは別の派生値としてSQLite側で生成する。
-
-例えば、
+特に発言本文については、検索の都合で原文を書き換えない。検索用に正規化文字列が必要になった場合は、Canonical 値とは別の派生値として SQLite 側で生成する。
 
 ```text
-Canonical:
-山田　太郎
-
-Derived:
-山田太郎
+Canonical: 山田　太郎
+Derived:   山田太郎
 ```
 
-のように扱う。
+Canonical 値を書き換えてはならない。
 
-Canonical値を書き換えてはならない。
+## データ更新
 
-# 15. Git運用上の規則
-
-JSONは以下を満たすものとする。
-
-* UTF-8
-* BOMなし
-* LF改行
-* 末尾改行あり
-* 整形済みJSON
-* インデント幅を固定
-* キー順を固定
-* 不必要なタイムスタンプを生成しない
-
-同じ入力データに対してParserを再実行した場合、意味上の変更がなければ同一JSONが生成されることを目標とする。
-
-すなわち、出力は可能な限り決定論的でなければならない。
-
-# 16. Schema Version
-
-各会議JSONのルートに、
-
-```json
-"schemaVersion": "1.0"
-```
-
-を持つ。
-
-Semantic Versioningに準じ、少なくとも次の考え方を用いる。
+収集システムは既存会議を再取得した場合、Canonical JSON を再生成して既存ファイルとの差分を判定する。
 
 ```text
-1.0
-1.1
-2.0
+Web → Parse → Canonical JSON → git diff
 ```
 
-後方互換性を失う変更ではMajor Versionを更新する。
+内容に変更がなければファイルを書き換えない。内容に変更が存在する場合のみ Git 上の差分として記録する。
 
-例:
-
-```text
-1.x → 2.0
-```
-
-フィールドの追加など後方互換な変更ではMinor Versionを更新できる。
-
-# 17. データ更新
-
-収集システムは既存会議を再取得した場合、Canonical JSONを再生成して既存ファイルとの差分を判定する。
-
-```text
-Web
- ↓
-Parse
- ↓
-Canonical JSON
- ↓
-git diff
-```
-
-内容に変更がなければファイルを書き換えない。
-
-内容に変更が存在する場合のみGit上の差分として記録する。
-
-SQLiteについてはGitデータ更新後に再ロードする。
-
-MVPでは差分更新と全再構築の両方を許容する。
-
-```text
-incremental load
-```
-
-および、
-
-```text
-rebuild database
-```
-
-を実装可能な構造とする。
-
-# 18. 設計上の責務
-
-各層の責務は以下とする。
-
-## Canonical Data Model
-
-「地方議会会議録というデータをどう表現するか」を定義する。
-
-## Git保存形式
-
-「データをどの単位・どのファイル構成で永続保存するか」を定義する。
-
-## SQLite格納形式
-
-「データをどのように検索しやすく配置するか」を定義する。
-
-## APIレスポンス形式
-
-「外部利用者にどの粒度でデータを提供するか」を定義する。
-
-したがって、
-
-```text
-Canonical
-    = 意味
-
-Git
-    = 永続化
-
-SQLite
-    = 検索
-
-API
-    = 配布
-```
-
-という責務分担とする。
-
-各層は同一の事実を表すが、それぞれの用途に応じてデータの粒度および重複度を変更する。
+SQLite については Git データ更新後に再ロードする。v0.1 の運用は Canonical JSON からの全再構築を標準とする（[architecture.md](architecture.md)）。スキーマとローダは、将来 `incremental load` と `rebuild database` の両方を実装できる構造とする。
