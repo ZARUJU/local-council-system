@@ -1,11 +1,14 @@
 # 収集・同期
 
-この文書は、定期収集における収集状態、初回同期、増分同期、および同期成功条件を定義します。Collector の処理段階（DISCOVER から EXPORT）とプロセス上の位置づけは [architecture.md](architecture.md) を参照してください。
+この文書は、定期収集における収集状態、初回同期、増分同期、および同期成功条件を定義します。Collector の処理段階（DISCOVER から EXPORT）とプロセス上の位置づけは [architecture.md](architecture.md) を参照してください。実装の有無は [status.md](status.md) を正とします。
 
 関連:
 
+- 実装状況 → [status.md](status.md)
 - Collector Job の段階と作業用 SQLite → [architecture.md](architecture.md)
+- 対象自治体と実装タイプ → [sources.md](sources.md)
 - EXPORT する Canonical JSON → [data.md](data.md)
+- Collector の起動方法 → [cli.md](cli.md)
 - 文書の読み順と優先関係 → [README.md](README.md)
 
 ## 目次
@@ -23,7 +26,6 @@
 - [Adapter との関係](#adapter-との関係)
 - [処理フロー](#処理フロー)
 - [実装例](#実装例)
-- [v0.1 で採用しない事項](#v01-で採用しない事項)
 
 ## 目的
 
@@ -69,34 +71,36 @@ class CollectionState:
 
 ### 保管場所
 
-v0.1 では、Collection State を `local-council-system` リポジトリ内の Git 管理外 JSON として保存する。
+Collection State は data リポジトリへ、自治体 1 ファイルとして保存する。会議 JSON の正本ではない。会議の開催日や検索用 SQLite から導出しない。
 
 ```text
-var/collection-state.json
+{dataRoot}/status/{municipalityCode}.json
 ```
 
-`var/` は `.gitignore` で除外する。正本ではない。`local-council-data` へ置かない。会議の開催日や検索用 SQLite から導出しない。
+既定の `dataRoot` は `../local-council-data` である。例:
 
-ファイル全体の例:
+```text
+../local-council-data/status/341002.json
+../local-council-data/status/281000.json
+```
+
+ファイルの例:
 
 ```json
 {
-  "municipalities": [
-    {
-      "municipalityCode": "341002",
-      "lastSuccessfulSync": "2026-09-14T10:00:00Z"
-    }
-  ]
+  "schemaVersion": "1.0",
+  "municipalityCode": "341002",
+  "lastSuccessfulSync": "2026-09-14T10:00:00Z"
 }
 ```
 
-ファイルが存在しない、または当該自治体の記録が無い場合は `lastSuccessfulSync = null` と同等とし、初回同期とする。
+ファイルが存在しない、または当該自治体の `lastSuccessfulSync` が空の場合は `lastSuccessfulSync = null` と同等とし、初回同期とする。
 
-Collector Service または専用 Repository のみがこのファイルを読み書きする。Adapter は参照しない。
+Collector Service または専用 Repository のみがこのファイルを読み書きする。Adapter は参照しない。Database Builder と API Server は `status/` を読まない。
 
-作業用 SQLite のスクラッチデータ（原資料など）とは寿命を分ける。`collection-state.json` はジョブ終了後も残す。スクラッチだけを消してよい。
+同期成功時だけファイルを更新する。失敗時は既存ファイルを残し、会議 JSON だけ書いてよい。試行オプション付きの実行では更新しない。
 
-v0.1 は、Collector の作業ツリーで `var/` が次回実行まで残ることを前提とする。GitHub-hosted runner のように実行環境が消える場合は、このファイルをジョブ間で復元しない限り毎回初回同期になる。
+`var/http-cache/` などのスクラッチデータとは寿命を分ける。HTTP キャッシュは消してよい。`status/` は data リポジトリの Git 履歴として残す。
 
 ## 初回同期
 
@@ -123,7 +127,7 @@ since = lastSuccessfulSync - lookbackDays
 
 ## Lookback
 
-Lookback は、過去会議録の後日追加・訂正を検出するために使用する。v0.1 ではデフォルト値を 30 日とする。
+Lookback は、過去会議録の後日追加・訂正を検出するために使用する。デフォルト値は 30 日とする。
 
 ```yaml
 collection:
@@ -132,7 +136,7 @@ collection:
 
 自治体または収集元の特性に応じて変更可能とする。
 
-Lookback 対象に既存会議が含まれる場合、その会議は原則として再取得・再解析する。v0.1 では、更新日時や ETag によるスキップ最適化は必須としない。
+Lookback 対象に既存会議が含まれる場合、その会議は原則として再取得・再解析する。更新日時や ETag によるスキップは行わない。
 
 ## 同期成功条件
 
@@ -156,7 +160,7 @@ DISCOVER → FETCH → PARSE → NORMALIZE → VALIDATE → EXPORT
 
 正常処理できた 99 件の Canonical JSON は保存してよい。次回同期では `lastSuccessfulSync` が更新されていないため、失敗した対象を含む範囲が再度探索される。
 
-v0.1 では `partial` 状態を定義しない。同期結果は `success` と `failed` の 2 種類のみとする。
+`partial` 状態は定義しない。同期結果は `success` と `failed` の 2 種類のみとする。
 
 ## DiscoveryContext
 
@@ -230,7 +234,7 @@ class VoicesAdapter:
         ...
 ```
 
-Collection State の読み書きは Collector Service または専用 Repository が担当する。保存先は `var/collection-state.json` とする。
+Collection State の読み書きは Collector Service または専用 Repository が担当する。保存先は `{dataRoot}/status/{municipalityCode}.json` とする。
 
 ## 処理フロー
 
@@ -356,36 +360,4 @@ async def collect_municipality(
 
 実際の実装では、例外の握り潰しを避け、失敗対象をログへ記録する。
 
-## v0.1 で採用しない事項
-
-v0.1 では次を必須としない。
-
-- `partial` 同期状態
-- 会議単位の再開カーソル
-- ページ単位の再開位置
-- `lastAttemptedSync`
-- `lastFailedSync`
-- 前回取得 URL
-- ETag による差分判定
-- Last-Modified による差分判定
-- 会議ごとの取得状態永続化
-- 複雑な Retry Queue
-- Collector State の履歴保存
-
-これらは、実際の運用で必要性が確認された場合に追加する。
-
-v0.1 の最小構成:
-
-```text
-Collection State
-    lastSuccessfulSync
-    保管先: local-council-system の var/collection-state.json（Git管理外）
-
-Collection Config
-    initialFrom
-    lookbackDays
-
-Sync Result
-    success
-    failed
-```
+再開カーソル、ETag によるスキップ、`partial` 状態など、本仕様が必須としない事項の実装状況は [status.md](status.md) を正とする。

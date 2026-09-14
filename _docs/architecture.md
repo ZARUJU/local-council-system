@@ -1,12 +1,14 @@
 # アーキテクチャ
 
-この文書は、収集から API 配布までのシステム境界、プロセス分離、CI、デプロイを定義します。
+この文書は、収集から API 配布までのシステム境界、プロセス分離、CI、デプロイを定義します。いま実装されている範囲は [status.md](status.md) を正とします。
 
 関連:
 
+- 実装状況 → [status.md](status.md)
 - 正本・派生データの形 → [data.md](data.md)
 - 公開 ID → [id.md](id.md)
 - 初回同期・増分同期 → [ingest-sync.md](ingest-sync.md)
+- CLI の起動方法 → [cli.md](cli.md)
 - HTTP API の契約 → [api.md](api.md)
 - 文書の読み順と優先関係 → [README.md](README.md)
 
@@ -26,7 +28,6 @@
 - [ログ・監視](#ログ監視)
 - [セキュリティ](#セキュリティ)
 - [将来拡張](#将来拡張)
-- [v0.1 の確定事項](#v01-の確定事項)
 
 ## 目的
 
@@ -97,6 +98,7 @@ Web → Canonical Data → Git → SQLite → API
 - Canonical JSON の保存
 - 自治体マスタの管理
 - JSON Schema の管理
+- 収集カーソル（`status/`）の保存。会議の正本ではない
 - Git 履歴による変更履歴の保存
 - Pull Request によるデータ更新管理
 
@@ -104,13 +106,17 @@ Web → Canonical Data → Git → SQLite → API
 local-council-data/
 ├── schema/
 │   ├── meeting.schema.json
-│   └── municipalities.schema.json
+│   ├── municipalities.schema.json
+│   └── collection-status.schema.json
 │
 ├── master/
 │   └── municipalities.json
 │
-└── data/
-    └── ...
+├── data/
+│   └── ...
+│
+└── status/
+    └── {municipalityCode}.json
 ```
 
 ディレクトリの詳細は [data.md](data.md) を参照する。
@@ -137,13 +143,12 @@ local-council-system/
 ├── config/
 │   └── sources/
 │
-├── var/                      # Git管理外。Collector実行時に生成
-│   └── collection-state.json
+├── var/                      # Git管理外。HTTP キャッシュや検索用 SQLite
 │
 └── tests/
 ```
 
-`var/collection-state.json` の意味は [ingest-sync.md](ingest-sync.md) を参照する。
+収集カーソルは `var/` ではなく data リポジトリの `status/` に置く。意味は [ingest-sync.md](ingest-sync.md) を参照する。
 
 ## アーキテクチャ原則
 
@@ -207,6 +212,8 @@ API Server
 | Database Builder Job | バッチ | Git → Load → Validate → SQLite Build → Publish |
 | API Server | 常駐 | HTTP Request → Query SQLite → JSON Response |
 
+各プロセスの実装状況は [status.md](status.md) を正とする。
+
 ### 各プロセスは再実行可能とする
 
 同一入力に対する処理は可能な限り決定論的とする。
@@ -243,9 +250,11 @@ HTTP アクセスでは次を考慮する。
 - robots.txt
 - 利用規約
 
+FETCH してよい原資料の範囲（公開 HTML か、画面専用の内部 JSON か）は [sources.md](sources.md) が定義する。
+
 取得した原資料は、そのジョブ内で PARSE 入力として扱う。
 
-v0.1 では、HTML や PDF のバイト列を `local-council-data` へ永続保存しない。正本リポジトリが保持するのは Canonical JSON と原典 URL であり、原資料そのものではない。
+HTML や PDF のバイト列を `local-council-data` へ永続保存しない。正本リポジトリが保持するのは Canonical JSON と原典 URL であり、原資料そのものではない。
 
 原資料を作業用 SQLite またはローカルキャッシュへ置いて PARSE を再実行することは許可する。ただしそれらは正本ではなく、Lookback 時は原則として再取得・再解析する。
 
@@ -392,7 +401,7 @@ database.new.sqlite → 全構築成功 → atomic replacement → database.sqli
 
 ### SQLite 再構築方針
 
-v0.1 では全再構築を標準方式とする。差分更新は v0.1 の必須要件としない。
+全再構築を標準方式とする。差分更新は必須としない。実装状況は [status.md](status.md) を正とする。
 
 ```text
 Canonical JSON → SQLiteを新規生成 → 全データロード
@@ -467,35 +476,35 @@ API Server        → SQLite
 
 ## 定期実行
 
-Collector は CLI アプリケーションとして実装し、外部スケジューラから実行可能とする。
+Collector は CLI アプリケーションとして実装し、外部スケジューラから実行可能とする。コマンド体系、引数、終了コードは [cli.md](cli.md) が定義する。
 
 ```bash
-python -m local_council collect --all
+local-council-system collect --municipality 341002
 
-python -m local_council collect --municipality 341002
+local-council-system collect --all
 
-python -m local_council collect --adapter voices
+python -m local_council_system collect --municipality 341002
 ```
 
 Database Builder:
 
 ```bash
-python -m local_council build-db
+local-council-system build-db
 ```
 
 API Server:
 
 ```bash
-uvicorn local_council.api.app:app
+uvicorn local_council_system.api.app:app
 ```
 
 スケジュール機能そのものはアプリケーションコードへ組み込まない。外部から GitHub Actions、cron、systemd timer、その他 CI/CD 基盤を利用して起動する。
 
 ## デプロイメント
 
-v0.1 では GitHub を利用した構成を第一候補とする。
+デプロイの第一候補は GitHub を利用した構成とする。いま採用しない構成は [status.md](status.md) を正とする。
 
-Collector の `var/collection-state.json` は Git 管理外のため、実行環境が毎回消える GitHub-hosted runner だけで収集する場合は、このファイルをジョブ間で復元するか、`var/` が残る環境で Collector を実行する。
+収集カーソルは data リポジトリの `status/{municipalityCode}.json` に置く。会議 JSON の正本ではなく、同期成功時だけ更新する。GitHub-hosted runner でも data リポジトリを checkout すればジョブ間で復元できる。`var/http-cache/` は実行環境に残さなくてよい。
 
 ```text
 GitHub Actions
@@ -565,7 +574,7 @@ duration
 
 ### API
 
-v0.1 では読み取り専用 API とする。データ更新用 HTTP API は提供しない。
+読み取り専用 API とする。データ更新用 HTTP API は提供しない。
 
 ### Git 認証情報
 
@@ -577,7 +586,7 @@ Collector は外部サイトから取得した HTML 等を信頼せず、Parser 
 
 ## 将来拡張
 
-v0.1 では導入しないが、追加可能とする。
+次は導入しないが、追加可能とする。いま実装しないものは [status.md](status.md) を正とする。
 
 ### 差分 Database Build
 
@@ -604,25 +613,6 @@ SQLite による検索性能が不足した場合、SQLite → FTS → 外部検
 ### API 複数インスタンス
 
 SQLite が読み取り専用であるため、同一 SQLite 成果物を複数 API Server へ配布する構成も可能とする。
-
-## v0.1 の確定事項
-
-```text
-リポジトリ:     2リポジトリ
-データ正本:     Git上のCanonical JSON
-データ更新:     Pull Request方式
-通常更新:       CI成功時の自動マージを許容
-収集:           定期実行可能なCollector Job
-DB生成:         独立したDatabase Builder Job
-検索DB:         SQLite（Canonical JSONから全再構築）
-作業用DB:       Collector内のSQLiteを許可する。正本およびAPI入力ではない
-収集状態:       var/collection-state.json（Git管理外、自治体ごとの lastSuccessfulSync）
-DB更新:         原則として全再構築
-API:            FastAPI
-API実行:        常駐プロセス
-検索:           SQLite LIKEを基本とする
-プロセス:       Collector / Database Builder / API Server の3分離
-```
 
 したがって、本システムの基本構造は次とする。
 

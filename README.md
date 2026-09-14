@@ -4,7 +4,7 @@
 
 国立国会図書館「国会会議録検索システム検索用API」に近い操作感を保ちつつ、自治体・都道府県・会期など地方議会固有の条件で検索できるようにします。
 
-v0.1 の仕様を固めた段階です。実装はこれから進めます。Python 3.13 以上を想定しています。
+いま実装されている範囲は [実装状況](_docs/status.md) を正とします。Python 3.13 以上を想定しています。
 
 ## 2リポジトリ構成
 
@@ -55,10 +55,13 @@ GET /api/speech?any=学校給食&municipalityCode=341002
 
 | 順 | 文書 | この文書が定義すること |
 | --- | --- | --- |
+| — | [実装状況](_docs/status.md) | いま実装されている範囲、未実装、採用しないもの |
 | 1 | [アーキテクチャ](_docs/architecture.md) | リポジトリ境界、3プロセス、CI、デプロイ |
 | 2 | [データモデル](_docs/data.md) | Canonical JSON / Git / SQLite / API の対応 |
 | 3 | [公開 ID](_docs/id.md) | Meeting / Speech の決定論的 UUIDv5 |
 | 4 | [収集・同期](_docs/ingest-sync.md) | 初回同期、増分同期、lookback |
-| 5 | [検索 API](_docs/api.md) | パラメータ、レスポンス、ページング |
+| 5 | [収集元](_docs/sources.md) | 自治体ごとの公開形態、実装タイプ、収集可否 |
+| 6 | [CLI](_docs/cli.md) | サブコマンド、引数、終了コード |
+| 7 | [検索 API](_docs/api.md) | パラメータ、レスポンス、ページング |
 
 文書間で記述が重なる場合の優先関係は [`_docs/README.md`](_docs/README.md) を参照してください。

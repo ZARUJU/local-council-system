@@ -4,6 +4,7 @@
 
 関連:
 
+- 実装状況 → [status.md](status.md)
 - Canonical / SQLite / API の対応 → [data.md](data.md)
 - API 上の `meetingID` / `speechID` → [api.md](api.md)
 - 文書の読み順と優先関係 → [README.md](README.md)
@@ -523,6 +524,6 @@ ID 生成アルゴリズムは公開後に原則変更しない。ID 生成方�
 }
 ```
 
-ただし v0.1 では必須としない。
+ただし必須としない。いま Canonical に載せるフィールドは [status.md](status.md) と [data.md](data.md) を正とする。
 
 公開 ID は外部利用者がデータ間の参照、キャッシュ、引用、分析結果の保存等に使用することを想定する。したがって、公開済み ID の安定性を API 仕様およびデータ仕様より優先して維持する。

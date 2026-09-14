@@ -1,9 +1,10 @@
 # 検索 API
 
-この文書は、横断検索用 HTTP API の外部契約を定義します。Canonical とのフィールド対応は [data.md](data.md)、公開 ID の形は [id.md](id.md) を参照してください。
+この文書は、横断検索用 HTTP API の外部契約を定義します。Canonical とのフィールド対応は [data.md](data.md)、公開 ID の形は [id.md](id.md) を参照してください。いま公開しているエンドポイントは [status.md](status.md) を正とします。
 
 関連:
 
+- 実装状況 → [status.md](status.md)
 - API Server の責務とプロセス上の位置づけ → [architecture.md](architecture.md)
 - Canonical / SQLite / API のマッピング → [data.md](data.md)
 - `meetingID` / `speechID` → [id.md](id.md)
@@ -190,7 +191,7 @@ nameOfMeeting=総務 文教
 
 ### その他の部分一致項目
 
-`municipality`、`prefecture`、`session`、`speakerPosition`、`speakerGroup` および `speakerRole` は、v0.1 では入力文字列全体による部分一致とする。複数語構文は定義しない。
+`municipality`、`prefecture`、`session`、`speakerPosition`、`speakerGroup` および `speakerRole` は、入力文字列全体による部分一致とする。複数語構文は定義しない。
 
 ### 日付
 
@@ -398,7 +399,7 @@ speech.order ASC
 
 レスポンス Content-Type は `application/json; charset=utf-8`。
 
-API は読み取り専用とする。v0.1 では HTTP メソッドは GET のみ公開する。認証は要求しない。CORS の許可範囲は運用環境で別途定める。
+API は読み取り専用とする。HTTP メソッドは GET のみ公開する。認証は要求しない。CORS の許可範囲は運用環境で別途定める。
 
 ## 内部データモデルとの関係
 
@@ -419,16 +420,6 @@ API では利便性のため、自治体情報や会議情報を発言レコー�
 
 ## 将来拡張
 
-v0.1 では次を実装対象外とする。
-
-- XML 出力
-- 全文検索エンジン
-- 検索結果ランキング
-- 形態素解析
-- 曖昧検索
-- 類義語検索
-- AI 検索
-- GraphQL
-- 書き込み API
+XML 出力、全文検索エンジン、書き込み API など、いま実装しないものは [status.md](status.md) を正とする。
 
 検索性能が不足した場合は、外部 API 仕様を維持したまま SQLite の検索実装を FTS 等へ置き換える。外部インターフェースと内部検索方式を分離する。

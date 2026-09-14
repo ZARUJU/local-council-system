@@ -1,9 +1,10 @@
 # データモデル
 
-この文書は、会議録データをどの意味で表現し、Git / SQLite / API の各層へどう載せるかを定義します。
+この文書は、会議録データをどの意味で表現し、Git / SQLite / API の各層へどう載せるかを定義します。いま実装されている範囲は [status.md](status.md) を正とします。
 
 関連:
 
+- 実装状況 → [status.md](status.md)
 - システム全体の流れ → [architecture.md](architecture.md)
 - 公開 ID の生成規則 → [id.md](id.md)
 - HTTP API の契約 → [api.md](api.md)
@@ -44,6 +45,8 @@ API Response   = View
 ```
 
 SQLite データベースを削除しても、Git 上の Canonical JSON から完全に再構築できなければならない。
+
+`status/` の収集カーソルは Git に置くが、会議の正本ではない。探索窓を決めるためだけに使い、開催日から導出せず、SQLite と API の入力にもしない。
 
 Collector、Parser および Normalizer が検索用 SQLite を直接正本として更新する設計は採用しない。収集・変換のための作業用 SQLite は許可する。作業用 SQLite は正本ではなく、API および Database Builder の入力にもならない。
 
@@ -256,7 +259,7 @@ url
 pdfURL
 ```
 
-Canonical JSON は原資料の所在を保持する。HTML や PDF のバイト列そのものは v0.1 では正本へ保存しない。
+Canonical JSON は原資料の所在を保持する。HTML や PDF のバイト列そのものは正本へ保存しない。
 
 必要に応じて将来次を追加可能とする。
 
@@ -293,7 +296,7 @@ ID は一度公開した後、原則として変更しない。
 - Parser の再実行結果を比較しやすい
 - 1 発言 1 ファイルよりファイル数を抑えられる
 
-ファイルパスは Git 上の配置であり、公開 ID そのものではない。公開 ID は UUIDv5 であり、ファイル名から一意に復元する必要はない。一方、同一会議を常に同じパスへ書くため、パスは自治体・開催日・同日内の識別番号から決定論的に決める。
+一度書いた `YYYY-MM-DD-NNN.json` の NNN は、同じ `sourceIdentity.meetingId` に対して再利用する。同じ開催日に会議が増えた場合は、未使用の番号を詰めて割り当て、既存ファイルの番号は変えない。
 
 ### ディレクトリ構成
 
@@ -301,17 +304,21 @@ ID は一度公開した後、原則として変更しない。
 local-council-data/
 ├── schema/
 │   ├── meeting.schema.json
-│   └── municipalities.schema.json
+│   ├── municipalities.schema.json
+│   └── collection-status.schema.json
 │
 ├── master/
 │   └── municipalities.json
 │
-└── data/
-    └── 34/
-        └── 341002/
-            └── 2026/
-                ├── 2026-09-10-001.json
-                └── 2026-09-10-002.json
+├── data/
+│   └── 34/
+│       └── 341002/
+│           └── 2026/
+│               ├── 2026-09-10-001.json
+│               └── 2026-09-10-002.json
+│
+└── status/
+    └── 341002.json
 ```
 
 | 階層 | 内容 |
@@ -320,6 +327,33 @@ local-council-data/
 | 第 2 階層 | 全国地方公共団体コード |
 | 第 3 階層 | 西暦年 |
 | ファイル名 | `YYYY-MM-DD-NNN.json` |
+
+`status/` は収集カーソルであり、Canonical JSON ではない。配置と更新規則は [ingest-sync.md](ingest-sync.md) を正とする。Database Builder は `data/` だけを会議入力とし、`status/` をロードしない。
+
+### 自治体マスタ
+
+`master/municipalities.json` は Municipality の正本である。各会議 JSON は `municipalityCode` だけを持ち、名称と都道府県名はここを参照する。
+
+```json
+{
+  "schemaVersion": "1.0",
+  "municipalities": [
+    {
+      "code": "341002",
+      "name": "広島市",
+      "prefecture": "広島県"
+    }
+  ]
+}
+```
+
+| フィールド | 内容 |
+| --- | --- |
+| `code` | 全国地方公共団体コード。6桁の文字列 |
+| `name` | 自治体正式名称 |
+| `prefecture` | 都道府県名 |
+
+`schema/` には Canonical JSON、マスタ、収集カーソルの JSON Schema を置く。Collector は `dataRoot` へ `schema/` と `master/` を揃え、会議 JSON を `data/` へ書く。同期成功時だけ `status/{municipalityCode}.json` を更新する。commit / Pull Request の実装状況は [status.md](status.md) を正とする。
 
 ### JSON ファイル仕様
 
@@ -397,9 +431,9 @@ meetings
 speeches
 ```
 
-Speaker 専用テーブルは v0.1 では作成しない。人物同定を行わず「その発言時点に記録された発言者情報」を Speech の属性として扱うためである。
+Speaker 専用テーブルは作成しない。人物同定を行わず「その発言時点に記録された発言者情報」を Speech の属性として扱うためである。
 
-v0.1 では発言本文検索を通常の `LIKE` で実装する。全文検索エンジンまたは FTS5 は必須としない。
+発言本文検索は通常の `LIKE` で実装する。全文検索エンジンまたは FTS5 は必須としない。
 
 ```sql
 SELECT *
@@ -552,4 +586,4 @@ Web → Parse → Canonical JSON → git diff
 
 内容に変更がなければファイルを書き換えない。内容に変更が存在する場合のみ Git 上の差分として記録する。
 
-SQLite については Git データ更新後に再ロードする。v0.1 の運用は Canonical JSON からの全再構築を標準とする（[architecture.md](architecture.md)）。スキーマとローダは、将来 `incremental load` と `rebuild database` の両方を実装できる構造とする。
+SQLite については Git データ更新後に再ロードする。運用は Canonical JSON からの全再構築を標準とする（[architecture.md](architecture.md)）。スキーマとローダは、将来 `incremental load` と `rebuild database` の両方を実装できる構造とする。差分更新の実装状況は [status.md](status.md) を正とする。
