@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from local_council_system.adapters.base import MinutesAdapter
+from local_council_system.adapters.discuss import DiscussAdapter
 from local_council_system.adapters.hiroshima_voices import HiroshimaVoicesAdapter
+from local_council_system.adapters.kensakusystem import KensakuSystemAdapter
 from local_council_system.adapters.kobe_dbsr import KobeDbsrAdapter
 from local_council_system.config import SourceConfig
 from local_council_system.http_client import PoliteHttpClient
@@ -9,6 +11,9 @@ from local_council_system.http_client import PoliteHttpClient
 ADAPTERS: dict[str, type[MinutesAdapter]] = {
     "hiroshima-voices": HiroshimaVoicesAdapter,
     "kobe-dbsr": KobeDbsrAdapter,
+    "dbsr": KobeDbsrAdapter,
+    "discuss": DiscussAdapter,
+    "kensakusystem": KensakuSystemAdapter,
 }
 
 

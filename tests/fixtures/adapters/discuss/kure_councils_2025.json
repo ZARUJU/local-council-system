@@ -1,0 +1,74 @@
+{
+  "councils": [
+    {
+      "view_years": [
+        {
+          "view_year": "2025",
+          "japanese_year": "令和7年",
+          "council_type": [
+            {
+              "council_type_path": "/0/1/3/6/",
+              "council_type_name1": "全会議",
+              "council_type_name2": "本会議",
+              "council_type_name3": "定例会",
+              "council_type_name4": null,
+              "council_type_name5": null,
+              "councils": [
+                {
+                  "council_id": 1243,
+                  "name": "令和　７年第１回　３月定例会",
+                  "postit_count": 0
+                },
+                {
+                  "council_id": 1267,
+                  "name": "令和　７年第２回　６月定例会",
+                  "postit_count": 0
+                },
+                {
+                  "council_id": 1280,
+                  "name": "令和　７年第３回　９月定例会",
+                  "postit_count": 0
+                },
+                {
+                  "council_id": 1291,
+                  "name": "令和　７年第４回１２月定例会",
+                  "postit_count": 0
+                }
+              ]
+            },
+            {
+              "council_type_path": "/0/1/4/8/11/",
+              "council_type_name1": "全会議",
+              "council_type_name2": "委員会",
+              "council_type_name3": "常任委員会",
+              "council_type_name4": "総務委員会",
+              "council_type_name5": null,
+              "councils": [
+                {
+                  "council_id": 1255,
+                  "name": "令和　７年第１回　総務委員会",
+                  "postit_count": 0
+                }
+              ]
+            },
+            {
+              "council_type_path": "/0/2/10/",
+              "council_type_name1": "資料",
+              "council_type_name2": "資料",
+              "council_type_name3": null,
+              "council_type_name4": null,
+              "council_type_name5": null,
+              "councils": [
+                {
+                  "council_id": 1245,
+                  "name": "令和　７年第１回　３月定例会",
+                  "postit_count": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

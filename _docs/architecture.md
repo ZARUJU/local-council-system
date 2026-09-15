@@ -250,7 +250,7 @@ HTTP アクセスでは次を考慮する。
 - robots.txt
 - 利用規約
 
-FETCH してよい原資料の範囲（公開 HTML か、画面専用の内部 JSON か）は [sources.md](sources.md) が定義する。
+FETCH してよい原資料の範囲（公開 HTML か、Discuss の閲覧 JSON か、その他の画面専用 JSON か）は [sources.md](sources.md) が定義する。
 
 取得した原資料は、そのジョブ内で PARSE 入力として扱う。
 

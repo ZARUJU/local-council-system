@@ -35,6 +35,11 @@ class SourceConfig:
     source_system: str
     base_url: str
     minutes_base_url: str
+    tenant_id: str | None
+    tenant_slug: str | None
+    listing_path: str
+    query_type: str
+    cabinets: tuple[int, ...]
     collection: CollectionConfig
     http: HttpConfig
     export_root: Path
@@ -52,6 +57,7 @@ def load_source_config(path: Path) -> SourceConfig:
     collection = raw.get("collection") or {}
     http = raw.get("http") or {}
     export = raw.get("export") or {}
+    cabinets = source.get("cabinets") or [1]
     return SourceConfig(
         municipality_code=str(raw["municipalityCode"]),
         municipality_name=str(raw.get("municipalityName") or ""),
@@ -60,6 +66,11 @@ def load_source_config(path: Path) -> SourceConfig:
         source_system=str(source.get("system") or "voices"),
         base_url=str(source["baseUrl"]).rstrip("/"),
         minutes_base_url=str(source["minutesBaseUrl"]).rstrip("/"),
+        tenant_id=str(source["tenantId"]) if source.get("tenantId") not in (None, "") else None,
+        tenant_slug=str(source["tenantSlug"]) if source.get("tenantSlug") not in (None, "") else None,
+        listing_path=str(source.get("listingPath") or "/100000"),
+        query_type=str(source.get("queryType") or "new"),
+        cabinets=tuple(int(item) for item in cabinets),
         collection=CollectionConfig(
             initial_from=_parse_date(collection.get("initialFrom")),
             lookback_days=int(collection.get("lookbackDays") or 30),

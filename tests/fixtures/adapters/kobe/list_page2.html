@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>検索結果一覧 | 神戸市会会議録検索システム</title>
+</head>
+<body>
+    <p class="contition__note">
+        検索条件に
+        <span class='color-red'> 17</span> 文書
+        がヒットしています。
+    </p>
+    <nav aria-label="ページ切り替え(上段)" class="pagination">
+        <form method="post" action="https://www.city.kobe.hyogo.dbsr.jp/333845">
+            <input type="hidden" name="Template" value="list">
+            <ul class="paging">
+                <li class="paging__item">
+                    <button class="button button--slim" type="submit" name="Page" value="1">1<span class="visually-hidden"> ページ</span></button>
+                </li>
+                <li class="paging__item">
+                    <button class="button button--slim" type="button" aria-pressed="true" aria-current="page">2<span class="visually-hidden"> ページ</span></button>
+                </li>
+            </ul>
+        </form>
+    </nav>
+    <ul class="result-document" aria-label="文書リスト">
+        <li class="result-document__item">
+            <div class="ans-title">
+                <div class="ans-title__name">
+                    <a href="https://www.city.kobe.hyogo.dbsr.jp/333845?Template=document&Id=2011#one">令和７年第１回定例市会（２月議会）（第３日）  議事日程・名簿</a>
+                </div>
+                <div class="ans-title__date"><span class="ans-title__datetitle">開催日:</span> 2025-02-26</div>
+            </div>
+        </li>
+        <li class="result-document__item">
+            <div class="ans-title">
+                <div class="ans-title__name">
+                    <a href="https://www.city.kobe.hyogo.dbsr.jp/333845?Template=document&Id=2006#one">令和７年第１回定例市会（２月議会）（第１日）　本文</a>
+                </div>
+                <div class="ans-title__date"><span class="ans-title__datetitle">開催日:</span> 2025-02-18</div>
+            </div>
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,24 @@
+municipalityCode: "342041"
+municipalityName: "三原市"
+prefecture: "広島県"
+adapter: "discuss"
+
+source:
+  system: "discuss"
+  baseUrl: "https://ssp.kaigiroku.net"
+  minutesBaseUrl: "https://ssp.kaigiroku.net/tenant/mihara"
+  tenantId: "506"
+  tenantSlug: "mihara"
+
+collection:
+  initialFrom: "2025-01-01"
+  lookbackDays: 30
+  earliestYear: 2025
+
+http:
+  minIntervalSeconds: 5
+  timeoutSeconds: 60
+  cache: true
+
+export:
+  dataRoot: "../local-council-data"

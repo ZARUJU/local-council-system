@@ -1,0 +1,60 @@
+{
+  "council_schedules": [
+    {
+      "schedule_id": 2,
+      "name": "02月21日－01号",
+      "page_no": 1,
+      "hit_count": 0,
+      "postit_count": 0,
+      "member_list": "<pre>trimmed</pre>"
+    },
+    {
+      "schedule_id": 3,
+      "name": "02月28日－02号",
+      "page_no": 23,
+      "hit_count": 0,
+      "postit_count": 0,
+      "member_list": "<pre>trimmed</pre>"
+    },
+    {
+      "schedule_id": 4,
+      "name": "03月03日－03号",
+      "page_no": 75,
+      "hit_count": 0,
+      "postit_count": 0,
+      "member_list": "<pre>trimmed</pre>"
+    },
+    {
+      "schedule_id": 5,
+      "name": "03月04日－04号",
+      "page_no": 129,
+      "hit_count": 0,
+      "postit_count": 0,
+      "member_list": "<pre>trimmed</pre>"
+    },
+    {
+      "schedule_id": 6,
+      "name": "03月05日－05号",
+      "page_no": 177,
+      "hit_count": 0,
+      "postit_count": 0,
+      "member_list": "<pre>trimmed</pre>"
+    },
+    {
+      "schedule_id": 7,
+      "name": "03月13日－06号",
+      "page_no": 191,
+      "hit_count": 0,
+      "postit_count": 0,
+      "member_list": "<pre>trimmed</pre>"
+    },
+    {
+      "schedule_id": 8,
+      "name": "03月25日－07号",
+      "page_no": 287,
+      "hit_count": 0,
+      "postit_count": 0,
+      "member_list": "<pre>trimmed</pre>"
+    }
+  ]
+}

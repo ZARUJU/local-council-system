@@ -3,7 +3,11 @@ from pathlib import Path
 
 from local_council_system.http_client import decode_html_bytes
 from local_council_system.models import MeetingReference
-from local_council_system.parsers.kobe_dbsr import parse_listing_html, parse_meeting_html
+from local_council_system.parsers.kobe_dbsr import (
+    listing_page_numbers,
+    parse_listing_html,
+    parse_meeting_html,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "adapters" / "kobe"
 BASE = "https://www.city.kobe.hyogo.dbsr.jp"
@@ -39,6 +43,22 @@ def test_kobe_listing_keeps_body_skips_roster_and_attachments() -> None:
     assert target.source_system == "dbsr"
     assert "Id=2020" in (target.fetch_url or "")
     assert "/333845" in (target.fetch_url or "")
+
+
+def test_kobe_listing_page_numbers_from_pager() -> None:
+    html = decode_html_bytes((FIXTURES / "list.html").read_bytes())
+    assert listing_page_numbers(html) == {1, 2}
+    page2 = decode_html_bytes((FIXTURES / "list_page2.html").read_bytes())
+    assert listing_page_numbers(page2) == {1, 2}
+
+
+def test_kobe_listing_second_page_keeps_body() -> None:
+    html = decode_html_bytes((FIXTURES / "list_page2.html").read_bytes())
+    references = parse_listing_html(html, municipality_code="281000", base_url=BASE)
+    assert [item.source_meeting_id for item in references] == ["2006"]
+    assert references[0].discovered_date == date(2025, 2, 18)
+    assert references[0].name == "本会議"
+
 
 
 def test_kobe_parse_2025_03_28_body() -> None:

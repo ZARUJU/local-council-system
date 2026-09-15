@@ -9,7 +9,7 @@ from pathlib import Path
 from local_council_system.adapters.registry import create_adapter
 from local_council_system.api.app import create_app
 from local_council_system.collectors.service import CollectOptions, CollectorService
-from local_council_system.config import load_municipality_config
+from local_council_system.config import SourceConfig, load_municipality_config
 from local_council_system.db.builder import build_search_database
 from local_council_system.http_client import PoliteHttpClient
 from local_council_system.validators.meeting import ValidationError
@@ -89,6 +89,15 @@ def _collect(args: argparse.Namespace) -> int:
         cache_dir=cache_dir,
         cache_enabled=cache_dir is not None,
     )
+    try:
+        return _collect_with_http(args, config, http)
+    finally:
+        http.close()
+
+
+def _collect_with_http(
+    args: argparse.Namespace, config: SourceConfig, http: PoliteHttpClient
+) -> int:
     try:
         adapter = create_adapter(config, http)
     except ValueError as exc:

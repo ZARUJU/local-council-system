@@ -62,4 +62,4 @@ api.md              外部にどう見せるか
 - 検索用 SQLite を全再構築することは [architecture.md](architecture.md) が正です。[data.md](data.md) は、将来の差分更新も載せられる構造であることを述べます。いま差分更新が未実装であることは [status.md](status.md) が正です。
 - `/api/speech` のフィールド名とページングは [api.md](api.md) が正です。[data.md](data.md) の API 例は対応関係の説明用です。
 - `collect --municipality` の引数と終了コードは [cli.md](cli.md) が正です。[architecture.md](architecture.md) の起動例はそれに合わせます。
-- 広島市・神戸市を収集可、松山市を収集不可とすることは [sources.md](sources.md) が正です。Adapter が実装済みかどうかは [status.md](status.md) が正です。
+- 対象自治体の収集可否は [sources.md](sources.md) が正です。Adapter が実装済みかどうかは [status.md](status.md) が正です。

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from json import dumps, loads
 from pathlib import Path
 
@@ -95,9 +95,15 @@ def test_collect_soumu_committee_meeting(tmp_path: Path) -> None:
 
 
 class KobeFixtureHttp:
+    def __init__(self) -> None:
+        self.list_urls: list[str] = []
+
     def get_text(self, url: str) -> str:
         fixtures = Path(__file__).parent / "fixtures" / "adapters" / "kobe"
         if "Template=list" in url or "/100000" in url:
+            self.list_urls.append(url)
+            if "Page=2" in url:
+                return decode_html_bytes((fixtures / "list_page2.html").read_bytes())
             return decode_html_bytes((fixtures / "list.html").read_bytes())
         if "Id=2020" in url:
             return decode_html_bytes((fixtures / "document_id2020.html").read_bytes())
@@ -130,6 +136,30 @@ def test_collect_kobe_body_document(tmp_path: Path) -> None:
     assert '"name": "本会議"' in text
     assert "大野陽平" in text
     assert create_adapter(config, KobeFixtureHttp()).__class__ is KobeDbsrAdapter  # type: ignore[arg-type]
+
+
+def test_kobe_discover_walks_listing_pages() -> None:
+    config = load_source_config(
+        Path(__file__).resolve().parents[1] / "config" / "sources" / "281000.yaml"
+    )
+    http = KobeFixtureHttp()
+    adapter = KobeDbsrAdapter(config, http)  # type: ignore[arg-type]
+    found = adapter.discover(
+        DiscoveryContext(
+            municipality_code="281000",
+            since=datetime(2025, 1, 1),
+            until=datetime(2025, 12, 31),
+        )
+    )
+    assert [item.source_meeting_id for item in found] == [
+        "2006",
+        "2012",
+        "2014",
+        "2017",
+        "2020",
+    ]
+    assert any("Page=2" in url for url in http.list_urls)
+    assert any("Page=" not in url.split("?", 1)[-1] for url in http.list_urls)
 
 
 class _OnlyMeetingAdapter(MinutesAdapter):
