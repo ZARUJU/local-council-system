@@ -9,6 +9,7 @@
 - 対象自治体と実装タイプ → [sources.md](sources.md)
 - EXPORT する Canonical JSON → [data.md](data.md)
 - Collector の起動方法 → [cli.md](cli.md)
+- 日々の起動と失敗時の対処 → [operation.md](operation.md)
 - 文書の読み順と優先関係 → [README.md](README.md)
 
 ## 目次

@@ -9,6 +9,7 @@
 - 初回同期・増分同期・lookback → [ingest-sync.md](ingest-sync.md)
 - 自治体ごとの公開形態と収集可否 → [sources.md](sources.md)
 - Canonical JSON の出力形 → [data.md](data.md)
+- 日々の起動と失敗時の対処 → [operation.md](operation.md)
 - API Server の起動 → `local-council-api` の cli.md
 - 文書の読み順と優先関係 → [README.md](README.md)
 

@@ -47,6 +47,7 @@ local-council-api      読み取り専用の検索 API
 | 4 | [収集・同期](_docs/ingest-sync.md) | 初回同期、増分同期、lookback |
 | 5 | [収集元](_docs/sources.md) | 自治体ごとの公開形態、実装タイプ、収集可否 |
 | 6 | [CLI](_docs/cli.md) | サブコマンド、引数、終了コード |
+| 7 | [運用](_docs/operation.md) | 日々の起動、定期実行、失敗時の対処 |
 
 HTTP API のパラメータ、レスポンス、ページングは `local-council-api` の [検索 API 仕様](../local-council-api/_docs/api.md) を正とします。
 

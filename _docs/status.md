@@ -8,6 +8,7 @@
 - 収集・同期 → [ingest-sync.md](ingest-sync.md)
 - 収集元の公開形態と可否 → [sources.md](sources.md)
 - CLI の引数と終了コード → [cli.md](cli.md)
+- 日々の起動と失敗時の対処 → [operation.md](operation.md)
 - HTTP API の契約 → `local-council-api` の api.md
 
 他文書は現状の進捗を書かない。実装の有無、収集対象の広さ、採用しない機能は本文書だけを更新する。

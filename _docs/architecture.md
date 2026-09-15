@@ -9,6 +9,7 @@
 - 公開 ID → [id.md](id.md)
 - 初回同期・増分同期 → [ingest-sync.md](ingest-sync.md)
 - CLI の起動方法 → [cli.md](cli.md)
+- 日々の起動と失敗時の対処 → [operation.md](operation.md)
 - HTTP API の契約 → `local-council-api` の api.md
 - 文書の読み順と優先関係 → [README.md](README.md)
 
@@ -516,7 +517,7 @@ local-council-api serve
 uvicorn local_council_api.app:app
 ```
 
-スケジュール機能そのものはアプリケーションコードへ組み込まない。外部から GitHub Actions、cron、systemd timer、その他 CI/CD 基盤を利用して起動する。
+スケジュール機能そのものはアプリケーションコードへ組み込まない。外部から GitHub Actions、cron、systemd timer、その他 CI/CD 基盤を利用して起動する。手順の正は [operation.md](operation.md) とする。
 
 ## デプロイメント
 
