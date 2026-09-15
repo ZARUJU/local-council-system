@@ -8,7 +8,7 @@
 - 収集・同期 → [ingest-sync.md](ingest-sync.md)
 - 収集元の公開形態と可否 → [sources.md](sources.md)
 - CLI の引数と終了コード → [cli.md](cli.md)
-- HTTP API の契約 → [api.md](api.md)
+- HTTP API の契約 → `local-council-api` の api.md
 
 他文書は現状の進捗を書かない。実装の有無、収集対象の広さ、採用しない機能は本文書だけを更新する。
 
@@ -38,14 +38,14 @@ build-db
         ↓
 検索用 SQLite
         ↓
-serve
+local-council-api serve
         ↓
 GET /api/speech
 GET /api/meeting
 GET /api/meeting_list
 ```
 
-Collector は Canonical JSON までを書く。data リポジトリへの commit / Pull Request は行わない。
+Collector は Canonical JSON までを書く。data リポジトリへの commit / Pull Request は行わない。API Server は本リポジトリに含めない。
 
 ## プロセス
 
@@ -53,9 +53,7 @@ Collector は Canonical JSON までを書く。data リポジトリへの commit
 | --- | --- | --- |
 | Collector Job | `collect` | 実装済み |
 | Database Builder Job | `build-db` | 実装済み。Canonical JSON から SQLite を全再構築する |
-| API Server | `serve` | 実装済み。FastAPI。読み取り専用 |
-
-`uvicorn local_council_system.api.app:app` でも同じアプリを起動できる。
+| API Server | `local-council-api serve` | `local-council-api` に実装済み。FastAPI。読み取り専用 |
 
 ## 収集対象
 
@@ -90,7 +88,6 @@ dbsr は `listingPath` / `queryType` / `cabinets` で差を yaml に置く。Dis
 ```text
 local-council-system collect --municipality <code>
 local-council-system build-db
-local-council-system serve
 ```
 
 `collect` の試行オプション `--since` `--until` `--limit` `--source-meeting-id` `--discover-only` `--no-cache` は実装済みである。別名 `--fino` も受け付ける。新規の説明では `--source-meeting-id` を使う。
@@ -114,6 +111,7 @@ CLI に含めない:
 - 自治体を超えたグローバルな `--jobs`
 - サブコマンド内での Git commit / `gh pr create`
 - `collect` から検索用 SQLite を直接更新するフラグ
+- `serve`（API は `local-council-api`）
 - パスワードや API キーを引数で受け取るオプション
 - 機械可読なサマリ JSON の標準出力
 
@@ -139,29 +137,7 @@ CLI に含めない:
 
 ## API
 
-実装済み:
-
-```text
-GET /api/meeting_list
-GET /api/meeting
-GET /api/speech
-```
-
-HTTP メソッドは GET のみ。認証は要求しない。検索結果 0 件は 200 で空配列を返す。
-
-`municipality`、`prefecture`、`session`、`speakerPosition`、`speakerGroup`、`speakerRole` は入力文字列全体の部分一致である。複数語構文は持たない。
-
-実装しない:
-
-- XML 出力
-- 全文検索エンジン
-- 検索結果ランキング
-- 形態素解析
-- 曖昧検索
-- 類義語検索
-- AI 検索
-- GraphQL
-- 書き込み API
+HTTP API の実装と契約の正は `local-council-api` である。本リポジトリは検索用 SQLite を生成して渡す。
 
 ## 同期
 
@@ -208,7 +184,7 @@ Collection State = lastSuccessfulSync
 進捗ではなく、現行仕様として他文書と共有する前提である。
 
 ```text
-リポジトリ:     local-council-system と local-council-data
+リポジトリ:     local-council-system、local-council-data、local-council-api
 データ正本:     Git 上の Canonical JSON
 派生:           SQLite と API
 データ更新:     Pull Request。通常更新は CI 成功時の自動マージを許容

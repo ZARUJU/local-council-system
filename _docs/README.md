@@ -1,6 +1,6 @@
 # 仕様書
 
-本ディレクトリは local-council-system の仕様を定義します。実装の正はコードではなく、ここに書いた内容です。
+本ディレクトリは local-council-system の仕様を定義します。実装の正はコードではなく、ここに書いた内容です。収集・生成の範囲を扱います。HTTP API の契約は sibling の `local-council-api` が正です。
 
 最初にリポジトリ直下の [README.md](../README.md) を読み、必要に応じて下の文書へ進んでください。いま動く範囲と、まだやらない範囲は [status.md](status.md) だけを正とします。
 
@@ -15,7 +15,7 @@
 | [ingest-sync.md](ingest-sync.md) | Collection State、初回同期、増分同期、lookback | Collector を実装・運用するとき |
 | [sources.md](sources.md) | 自治体ごとの公開形態、実装タイプ、収集可否 | Adapter を追加・見送るとき |
 | [cli.md](cli.md) | CLI のコマンド体系、起動方法、終了コード | ジョブを起動・試行するとき |
-| [api.md](api.md) | HTTP API の契約（パラメータ、レスポンス、エラー） | API を実装・利用するとき |
+| [api.md](api.md) | HTTP API の契約は `local-council-api` を正とする。本リポジトリはポインタ | API 契約の所在を知りたいとき |
 
 ## 推奨する読み順
 
@@ -35,8 +35,6 @@ ingest-sync.md      いつ、どこから、どこまで取り直すか
 sources.md          どの自治体を、どの公開形態として扱うか
     ↓
 cli.md              ジョブをどう起動するか
-    ↓
-api.md              外部にどう見せるか
 ```
 
 アーキテクチャだけ読めばシステムの形は分かります。データと API を実装するときは、その手前の文書を先に読んでください。公開 ID はデータモデルの一部ですが、生成規則が独立して長いため別文書にしています。実装の有無や収集対象の広さは、各文書ではなく [status.md](status.md) に書きます。
@@ -54,12 +52,12 @@ api.md              外部にどう見せるか
 | 収集範囲、`lastSuccessfulSync`、lookback、同期の成否 | [ingest-sync.md](ingest-sync.md) |
 | 対象自治体、実装タイプ、収集してよい原資料 | [sources.md](sources.md) |
 | CLI のサブコマンド、引数、終了コード、起動方法 | [cli.md](cli.md) |
-| リクエスト、レスポンス、ページング、HTTP エラー | [api.md](api.md) |
+| リクエスト、レスポンス、ページング、HTTP エラー | `local-council-api` の api.md |
 
 例:
 
-- Canonical JSON の `meeting.id` が UUIDv5 であることは [id.md](id.md) が正です。[data.md](data.md) の JSON 例と [api.md](api.md) の `meetingID` はそれに合わせます。
+- Canonical JSON の `meeting.id` が UUIDv5 であることは [id.md](id.md) が正です。[data.md](data.md) の JSON 例と `local-council-api` の `meetingID` はそれに合わせます。
 - 検索用 SQLite を全再構築することは [architecture.md](architecture.md) が正です。[data.md](data.md) は、将来の差分更新も載せられる構造であることを述べます。いま差分更新が未実装であることは [status.md](status.md) が正です。
-- `/api/speech` のフィールド名とページングは [api.md](api.md) が正です。[data.md](data.md) の API 例は対応関係の説明用です。
+- `/api/speech` のフィールド名とページングは `local-council-api` の api.md が正です。[data.md](data.md) の API 例は対応関係の説明用です。
 - `collect --municipality` の引数と終了コードは [cli.md](cli.md) が正です。[architecture.md](architecture.md) の起動例はそれに合わせます。
 - 対象自治体の収集可否は [sources.md](sources.md) が正です。Adapter が実装済みかどうかは [status.md](status.md) が正です。

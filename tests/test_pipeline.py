@@ -1,12 +1,10 @@
 from datetime import date
 from json import loads
 from pathlib import Path
-
-from fastapi.testclient import TestClient
+import sqlite3
 
 from local_council_system.adapters.hiroshima_voices import HiroshimaVoicesAdapter
 from local_council_system.adapters.kobe_dbsr import KobeDbsrAdapter
-from local_council_system.api.app import create_app
 from local_council_system.collectors.service import CollectOptions, CollectorService
 from local_council_system.config import load_source_config
 from local_council_system.db.builder import build_search_database
@@ -43,7 +41,7 @@ def test_canonical_json_matches_schema() -> None:
     validate_meeting_payload(loads(dumps_canonical(canonical)))
 
 
-def test_pipeline_hiroshima_and_kobe_to_speech_api(tmp_path: Path) -> None:
+def test_pipeline_hiroshima_and_kobe_to_sqlite(tmp_path: Path) -> None:
     data_root = tmp_path / "canonical"
     _collect_hiroshima(data_root)
     _collect_kobe(data_root)
@@ -56,34 +54,44 @@ def test_pipeline_hiroshima_and_kobe_to_speech_api(tmp_path: Path) -> None:
     assert result.meetings == 2
     assert result.speeches > 100
 
-    client = TestClient(create_app(database))
-    hiroshima = client.get("/api/speech", params={"any": "一般質問", "municipalityCode": "341002"})
-    assert hiroshima.status_code == 200
-    body = hiroshima.json()
-    assert body["numberOfRecords"] >= 1
-    assert body["speechRecord"][0]["municipality"] == "広島市"
-    assert "一般質問" in body["speechRecord"][0]["speech"]
+    connection = sqlite3.connect(database)
+    connection.row_factory = sqlite3.Row
+    hiroshima = connection.execute(
+        """
+        SELECT speeches.speech_text AS speech
+        FROM speeches
+        JOIN meetings ON meetings.id = speeches.meeting_id
+        WHERE meetings.municipality_code = ?
+          AND speeches.speech_text LIKE ?
+        ORDER BY meetings.date DESC, meetings.id ASC, speeches.speech_order ASC
+        """,
+        ("341002", "%一般質問%"),
+    ).fetchone()
+    assert hiroshima is not None
+    assert "一般質問" in hiroshima["speech"]
 
-    kobe = client.get("/api/speech", params={"any": "学校給食", "municipalityCode": "281000"})
-    assert kobe.status_code == 200
-    kobe_body = kobe.json()
-    assert kobe_body["numberOfRecords"] >= 1
-    assert kobe_body["speechRecord"][0]["municipality"] == "神戸市"
-    assert "学校給食" in kobe_body["speechRecord"][0]["speech"]
+    kobe = connection.execute(
+        """
+        SELECT municipalities.name AS municipality, speeches.speech_text AS speech
+        FROM speeches
+        JOIN meetings ON meetings.id = speeches.meeting_id
+        JOIN municipalities ON municipalities.code = meetings.municipality_code
+        WHERE meetings.municipality_code = ?
+          AND speeches.speech_text LIKE ?
+        ORDER BY meetings.date DESC, meetings.id ASC, speeches.speech_order ASC
+        """,
+        ("281000", "%学校給食%"),
+    ).fetchone()
+    assert kobe is not None
+    assert kobe["municipality"] == "神戸市"
+    assert "学校給食" in kobe["speech"]
 
-    empty = client.get("/api/speech", params={"any": "存在しない検索語xyz", "municipalityCode": "341002"})
-    assert empty.status_code == 200
-    assert empty.json()["numberOfRecords"] == 0
-    assert empty.json()["speechRecord"] == []
-
-    invalid = client.get("/api/speech")
-    assert invalid.status_code == 400
-
-    meeting = client.get("/api/meeting", params={"meetingID": body["speechRecord"][0]["meetingID"]})
-    assert meeting.status_code == 200
-    meeting_body = meeting.json()
-    assert meeting_body["numberOfRecords"] == 1
-    assert len(meeting_body["meetingRecord"][0]["speechRecord"]) == 145
+    hiroshima_count = connection.execute(
+        "SELECT COUNT(*) FROM speeches JOIN meetings ON meetings.id = speeches.meeting_id WHERE meetings.municipality_code = ?",
+        ("341002",),
+    ).fetchone()[0]
+    assert hiroshima_count == 145
+    connection.close()
 
 
 def _collect_hiroshima(data_root: Path) -> None:

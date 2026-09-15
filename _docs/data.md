@@ -7,7 +7,7 @@
 - 実装状況 → [status.md](status.md)
 - システム全体の流れ → [architecture.md](architecture.md)
 - 公開 ID の生成規則 → [id.md](id.md)
-- HTTP API の契約 → [api.md](api.md)
+- HTTP API の契約 → `local-council-api` の api.md
 - 文書の読み順と優先関係 → [README.md](README.md)
 
 ## 目次
@@ -527,7 +527,7 @@ ON speeches(speaker_name);
 
 ## API との対応
 
-API レスポンス形式の契約は [api.md](api.md) が定義する。本節は Canonical / SQLite / API のフィールド対応のみを扱う。
+API レスポンス形式の契約は `local-council-api` の api.md が定義する。本節は Canonical / SQLite / API のフィールド対応のみを扱う。
 
 API では Canonical Model を利用目的に応じて非正規化する。Canonical JSON では `Meeting → Speech[]` だが、発言単位 API では Speech に Meeting と Municipality を付けて 1 レコードとして返す。自治体情報や会議情報を発言レコードへ重複して含めることを許容する。
 

@@ -6,7 +6,7 @@
 
 - 実装状況 → [status.md](status.md)
 - Canonical / SQLite / API の対応 → [data.md](data.md)
-- API 上の `meetingID` / `speechID` → [api.md](api.md)
+- API 上の `meetingID` / `speechID` → `local-council-api` の api.md
 - 文書の読み順と優先関係 → [README.md](README.md)
 
 ## 目次
@@ -396,7 +396,7 @@ Speech:
 
 ### API
 
-Canonical の `meeting.id` は API 上では `meetingID`、`speech.id` は `speechID` として返す。レスポンス全体の契約は [api.md](api.md) を参照する。
+Canonical の `meeting.id` は API 上では `meetingID`、`speech.id` は `speechID` として返す。レスポンス全体の契約は `local-council-api` の api.md を参照する。
 
 ```json
 {

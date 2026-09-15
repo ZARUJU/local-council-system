@@ -1,14 +1,15 @@
 # CLI
 
-この文書は、local-council-system のコマンドラインインタフェースを定義します。収集範囲と同期成否は [ingest-sync.md](ingest-sync.md)、対象自治体と実装タイプは [sources.md](sources.md)、プロセス分離は [architecture.md](architecture.md) を参照してください。いま実装されているコマンドとオプションは [status.md](status.md) を正とします。
+この文書は、local-council-system のコマンドラインインタフェースを定義します。収集範囲と同期成否は [ingest-sync.md](ingest-sync.md)、対象自治体と実装タイプは [sources.md](sources.md)、プロセス分離は [architecture.md](architecture.md) を参照してください。いま実装されているコマンドとオプションは [status.md](status.md) を正とします。HTTP API の起動は `local-council-api` の cli.md を正とします。
 
 関連:
 
 - 実装状況 → [status.md](status.md)
-- Collector / Database Builder / API Server の責務 → [architecture.md](architecture.md)
+- Collector / Database Builder の責務 → [architecture.md](architecture.md)
 - 初回同期・増分同期・lookback → [ingest-sync.md](ingest-sync.md)
 - 自治体ごとの公開形態と収集可否 → [sources.md](sources.md)
 - Canonical JSON の出力形 → [data.md](data.md)
+- API Server の起動 → `local-council-api` の cli.md
 - 文書の読み順と優先関係 → [README.md](README.md)
 
 ## 目次
@@ -20,22 +21,20 @@
 - [共通規則](#共通規則)
 - [collect](#collect)
 - [build-db](#build-db)
-- [serve](#serve)
 - [終了コード](#終了コード)
 - [標準出力・ログ](#標準出力ログ)
 - [設定ファイルと作業ディレクトリ](#設定ファイルと作業ディレクトリ)
 
 ## 目的
 
-3 プロセスを、外部スケジューラから起動できる CLI として提供する。
+収集・生成の 2 プロセスを、外部スケジューラから起動できる CLI として提供する。
 
 ```text
 collect   Collector Job
 build-db  Database Builder Job
-serve     API Server
 ```
 
-スケジュール機能そのものはアプリケーションへ組み込まない。cron、systemd timer、GitHub Actions 等が本 CLI を呼ぶ。
+API Server は `local-council-api` が起動する。スケジュール機能そのものはアプリケーションへ組み込まない。cron、systemd timer、GitHub Actions 等が本 CLI を呼ぶ。
 
 ## 起動方法
 
@@ -73,9 +72,8 @@ Canonical JSON の上書き、SQLite の全再構築、HTTP キャッシュの�
 | --- | --- | --- |
 | `collect` | Collector Job | DISCOVER から EXPORT まで |
 | `build-db` | Database Builder Job | Canonical JSON から検索用 SQLite を全再構築 |
-| `serve` | API Server | FastAPI を起動する |
 
-`uvicorn` を直接起動する構成も [architecture.md](architecture.md) は許容する。CLI の `serve` はそのラッパである。実装の有無は [status.md](status.md) を正とする。
+`serve` は本 CLI に含めない。API の起動は `local-council-api serve` である。実装の有無は [status.md](status.md) を正とする。
 
 ヘルプ:
 
@@ -281,23 +279,7 @@ local-council-system build-db [options]
 
 入力は Collector の作業用 SQLite ではない。Git 上の Canonical JSON、またはそれに相当する `data-root` である。
 
-生成は一時ファイルへ行い、成功後に本番ファイルへ置換する。詳細は [architecture.md](architecture.md) を正とする。
-
-## serve
-
-検索 API を起動する。
-
-```text
-local-council-system serve [--host HOST] [--port PORT] [--database PATH]
-```
-
-既定は `--host 127.0.0.1 --port 8000 --database var/search.sqlite` である。次の直接起動も同じアプリを指す。
-
-```bash
-uvicorn local_council_system.api.app:app
-```
-
-API の契約は [api.md](api.md) を正とする。本コマンドはプロセスの起動方法だけを定義する。
+生成は一時ファイルへ行い、成功後に本番ファイルへ置換する。詳細は [architecture.md](architecture.md) を正とする。配布側が読むパスは、運用で `local-council-api serve --database` に渡す。
 
 ## 終了コード
 

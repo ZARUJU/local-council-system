@@ -9,7 +9,7 @@
 - 公開 ID → [id.md](id.md)
 - 初回同期・増分同期 → [ingest-sync.md](ingest-sync.md)
 - CLI の起動方法 → [cli.md](cli.md)
-- HTTP API の契約 → [api.md](api.md)
+- HTTP API の契約 → `local-council-api` の api.md
 - 文書の読み順と優先関係 → [README.md](README.md)
 
 ## 目次
@@ -87,7 +87,7 @@ Web → Canonical Data → Git → SQLite → API
 
 ### リポジトリ構成
 
-2 リポジトリ構成とする。
+3 リポジトリ構成とする。
 
 #### local-council-data
 
@@ -123,22 +123,19 @@ local-council-data/
 
 #### local-council-system
 
-データ収集、変換、検証、SQLite 生成および API 提供を担う。
+データ収集、変換、検証、検索用 SQLite 生成を担う。HTTP API は提供しない。
 
 ```text
 local-council-system/
 ├── src/
-│   └── local_council/
+│   └── local_council_system/
 │       ├── collectors/
 │       ├── parsers/
 │       ├── normalizers/
 │       ├── validators/
 │       ├── exporters/
-│       ├── loaders/
 │       ├── db/
-│       ├── api/
-│       ├── services/
-│       └── cli/
+│       └── cli.py
 │
 ├── config/
 │   └── sources/
@@ -149,6 +146,25 @@ local-council-system/
 ```
 
 収集カーソルは `var/` ではなく data リポジトリの `status/` に置く。意味は [ingest-sync.md](ingest-sync.md) を参照する。
+
+#### local-council-api
+
+検索用 SQLite を読み取り専用で配布する。収集と SQLite 生成は行わない。
+
+```text
+local-council-api/
+├── src/
+│   └── local_council_api/
+│       ├── app.py
+│       ├── search.py
+│       └── cli.py
+│
+├── var/                      # Git管理外。配置した検索用 SQLite
+│
+└── tests/
+```
+
+HTTP API の契約は `local-council-api` の api.md を正とする。
 
 ## アーキテクチャ原則
 
@@ -434,7 +450,7 @@ GET /api/meeting
 GET /api/speech
 ```
 
-エンドポイントの契約は [api.md](api.md) が定義する。
+エンドポイントの契約は `local-council-api` の api.md が定義する。実装は `local-council-api` に置く。
 
 API Server は次を行わない。
 
@@ -492,10 +508,12 @@ Database Builder:
 local-council-system build-db
 ```
 
-API Server:
+API Server は `local-council-api` が起動する。
 
 ```bash
-uvicorn local_council_system.api.app:app
+local-council-api serve
+
+uvicorn local_council_api.app:app
 ```
 
 スケジュール機能そのものはアプリケーションコードへ組み込まない。外部から GitHub Actions、cron、systemd timer、その他 CI/CD 基盤を利用して起動する。
@@ -521,16 +539,17 @@ API Server は別途常駐環境へデプロイする
 ```text
 GitHub
 ├── local-council-data
-└── local-council-system
+├── local-council-system
+│       ↓
+│   CI/CD
+│   ├── Collector Job
+│   ├── Validation
+│   └── DB Builder
+└── local-council-api
         ↓
-CI/CD
-├── Collector Job
-├── Validation
-└── DB Builder
-        ↓
-API Hosting
-├── FastAPI
-└── SQLite
+    API Hosting
+    ├── FastAPI
+    └── SQLite
 ```
 
 具体的なホスティング環境は本仕様では固定しない。

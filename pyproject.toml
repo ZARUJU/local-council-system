@@ -1,18 +1,16 @@
 [project]
 name = "local-council-system"
 version = "0.1.0"
-description = "地方議会会議録の収集・変換・配布"
+description = "地方議会会議録の収集・変換"
 readme = "README.md"
 authors = [
     { name = "ZARUJU", email = "0613akb48@gmail.com" }
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "fastapi>=0.141.1",
     "httpx>=0.28",
     "jsonschema>=4.26.0",
     "pyyaml>=6.0",
-    "uvicorn[standard]>=0.53.0",
 ]
 
 [project.optional-dependencies]

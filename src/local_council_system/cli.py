@@ -7,7 +7,6 @@ from datetime import date
 from pathlib import Path
 
 from local_council_system.adapters.registry import create_adapter
-from local_council_system.api.app import create_app
 from local_council_system.collectors.service import CollectOptions, CollectorService
 from local_council_system.config import SourceConfig, load_municipality_config
 from local_council_system.db.builder import build_search_database
@@ -54,14 +53,6 @@ def main(argv: list[str] | None = None) -> int:
         help="生成する SQLite ファイル",
     )
     build.add_argument("--full", action="store_true", help="全再構築（省略しても全再構築する）")
-    serve = sub.add_parser("serve", help="検索 API を起動する")
-    serve.add_argument("--host", default="127.0.0.1")
-    serve.add_argument("--port", type=int, default=8000)
-    serve.add_argument(
-        "--database",
-        default="var/search.sqlite",
-        help="検索用 SQLite のパス",
-    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(
@@ -73,8 +64,6 @@ def main(argv: list[str] | None = None) -> int:
         return _collect(args)
     if args.command == "build-db":
         return _build_db(args)
-    if args.command == "serve":
-        return _serve(args)
     parser.error(f"unknown command: {args.command}")
     return 2
 
@@ -162,18 +151,6 @@ def _build_db(args: argparse.Namespace) -> int:
         result.speeches,
         result.output,
     )
-    return 0
-
-
-def _serve(args: argparse.Namespace) -> int:
-    database = Path(args.database)
-    if not database.exists():
-        logger.error("search database not found: %s", database)
-        return 2
-    import uvicorn
-
-    app = create_app(database)
-    uvicorn.run(app, host=args.host, port=args.port)
     return 0
 
 
