@@ -10,6 +10,7 @@ from local_council_system.parsers.kobe_dbsr import (
     listing_page_hrefs,
     parse_listing_html,
     parse_meeting_html,
+    speech_source_url,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures" / "adapters" / "dbsr"
@@ -57,6 +58,9 @@ def test_pref_parse_page_text_voices() -> None:
     assert parsed.speeches[0].speaker.position == "議長"
     assert "これより会議を開きます" in parsed.speeches[0].text
     assert parsed.speeches[0].speaker.name != "1:"
+    assert "VoiceID=88001" in (parsed.speeches[0].source_url or "")
+    assert (parsed.speeches[0].source_url or "").endswith("#all")
+    assert "#voice-" not in (parsed.speeches[0].source_url or "")
     assert parsed.speeches[1].speaker.name == "藤井敏子"
     assert "質問いたします" in parsed.speeches[1].text
 
@@ -138,6 +142,8 @@ def test_hatsukaichi_parse_docpage_voices_without_kun() -> None:
     assert parsed.speeches[1].speaker.name == "三宅洋一"
     assert parsed.speeches[1].speaker.position == "議員"
     assert parsed.speeches[1].text.startswith("議長")
+    assert (parsed.speeches[0].source_url or "").endswith("#VoiceNo1")
+    assert "#voice-" not in (parsed.speeches[0].source_url or "")
 
 
 class HatsukaichiFixtureHttp:
@@ -168,3 +174,21 @@ def test_hatsukaichi_fetch_uses_doc_page() -> None:
     parsed = adapter.parse(adapter.fetch(found[0]), found[0])
     assert parsed.speeches[0].speaker.name == "新田茂美"
     assert create_adapter(config, http).__class__ is KobeDbsrAdapter  # type: ignore[arg-type]
+
+
+def test_speech_source_url_matches_each_dbsr_viewer() -> None:
+    pref = (
+        "https://www.pref.hiroshima.dbsr.jp/index.php/9577699"
+        "?Template=document&VoiceType=all&DocumentID=2191"
+    )
+    hats = (
+        "https://www.city.hatsukaichi.hiroshima.dbsr.jp/index.php/1888587"
+        "?Template=doc-page&VoiceType=all&DocumentID=1032"
+    )
+    kobe = "https://www.city.kobe.hyogo.dbsr.jp/333845?Template=document&Id=2020"
+    pref_url = speech_source_url(pref, voice_id="46805", voice_no=1)
+    assert "VoiceID=46805" in pref_url
+    assert pref_url.endswith("#all")
+    assert "#voice-" not in pref_url
+    assert speech_source_url(hats, voice_no=1).endswith("#VoiceNo1")
+    assert speech_source_url(kobe, voice_no=1).endswith("#all:1")

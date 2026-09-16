@@ -144,7 +144,7 @@ def _parse_print_all(text: str, source_url: str) -> list[ParsedSpeech]:
                 speaker=speaker,
                 text=speech_text,
                 start_page=None,
-                source_url=f"{source_url.split('#', 1)[0]}#speech-{order}",
+                source_url=source_url.split("#", 1)[0],
             )
         )
     return speeches

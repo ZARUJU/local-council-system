@@ -234,6 +234,33 @@ def rewrite_document_fetch_url(url: str) -> str:
     return urlunparse(parsed._replace(query=urlencode(params)))
 
 
+def speech_source_url(
+    page_url: str,
+    *,
+    voice_id: str | None = None,
+    voice_no: int | str | None = None,
+) -> str:
+    """閲覧 UI が実際に読む発言 URL を返す。
+
+    発明した `#voice-` 断片は使わない。
+    広島県議会は `VoiceID` クエリ、神戸市会は `#all:{発言番号}`、
+    旧 UI の doc-page は `#VoiceNo{n}`。
+    """
+    parsed = urlparse(page_url.split("#", 1)[0])
+    params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    template = params.get("Template", "")
+    number = None if voice_no is None else str(voice_no)
+    base = parsed._replace(query=urlencode(params))
+    if template in {"doc-page", "doc-one-frame"} and number:
+        return urlunparse(base) + f"#VoiceNo{number}"
+    if params.get("DocumentID") and voice_id:
+        params["VoiceID"] = str(voice_id)
+        return urlunparse(parsed._replace(query=urlencode(params))) + "#all"
+    if number:
+        return urlunparse(base) + f"#all:{number}"
+    return urlunparse(base)
+
+
 def parse_listing_bytes(data: bytes, **kwargs) -> list[MeetingReference]:
     return parse_listing_html(decode_html_bytes(data), **kwargs)
 
@@ -285,7 +312,7 @@ def _parse_voice_blocks(html: str, source_url: str) -> list[ParsedSpeech]:
                 speaker=speaker,
                 text=text,
                 start_page=None,
-                source_url=f"{source_url.split('#', 1)[0]}#voice-{order}",
+                source_url=speech_source_url(source_url, voice_no=order),
             )
         )
     return speeches
@@ -325,7 +352,7 @@ def _parse_page_voices(html: str, source_url: str) -> list[ParsedSpeech]:
                 speaker=speaker,
                 text=text,
                 start_page=None,
-                source_url=f"{source_url.split('#', 1)[0]}#voice-{source_id}",
+                source_url=speech_source_url(source_url, voice_id=source_id, voice_no=order),
             )
         )
     return speeches
@@ -357,7 +384,7 @@ def _parse_docpage_voices(html: str, source_url: str) -> list[ParsedSpeech]:
                 speaker=speaker,
                 text=text,
                 start_page=None,
-                source_url=f"{source_url.split('#', 1)[0]}#voice-{order}",
+                source_url=speech_source_url(source_url, voice_no=order),
             )
         )
     return speeches
@@ -433,7 +460,7 @@ def _parse_speeches(text: str, source_url: str) -> list[ParsedSpeech]:
                 speaker=speaker,
                 text=speech_text,
                 start_page=None,
-                source_url=f"{source_url.split('#', 1)[0]}#speech-{order}",
+                source_url=speech_source_url(source_url, voice_no=order),
             )
         )
     return speeches

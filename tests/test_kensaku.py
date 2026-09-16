@@ -100,6 +100,8 @@ def test_kensaku_print_all_splits_speakers() -> None:
     assert parsed.speeches[0].speaker.name == "本谷宏行"
     assert parsed.speeches[0].speaker.position == "議長"
     assert "開会いたします" in parsed.speeches[0].text
+    assert parsed.speeches[0].source_url == f"{BASE}/cgi-bin3/ResultFrame.exe?fileName=R070225A"
+    assert "#speech-" not in (parsed.speeches[0].source_url or "")
     assert parsed.speeches[1].speaker.name == "小野申人"
     assert parsed.speeches[1].speaker.position == "市長"
     assert parsed.speeches[2].speaker.name == "岡田隆行"

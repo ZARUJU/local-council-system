@@ -70,6 +70,9 @@ def test_kobe_parse_2025_03_28_body() -> None:
     assert parsed.speeches[0].speaker.name == "坊 やすなが"
     assert parsed.speeches[0].speaker.position == "議長"
     assert "ただいまより本日の会議を開きます" in parsed.speeches[0].text
+    assert parsed.speeches[0].source_url == (
+        "https://www.city.kobe.hyogo.dbsr.jp/333845?Template=document&Id=2020#all:1"
+    )
 
     oono = parsed.speeches[1]
     assert oono.speaker.name == "大野陽平"
