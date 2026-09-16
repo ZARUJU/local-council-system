@@ -1,11 +1,11 @@
 # 運用
 
-この文書は、local-council-system の日々の起動、定期実行、成果物の受け渡し、失敗時の対処を定義します。コマンドの引数と終了コードは [cli.md](cli.md)、同期の成否は [ingest-sync.md](ingest-sync.md)、プロセス境界は [architecture.md](architecture.md) を正とします。いま実装されている範囲は [status.md](status.md) を正とします。
+この文書は、local-council-system の日々の起動、定期実行、成果物の受け渡し、失敗時の対処を定義します。コマンドの引数と終了コードは [cli.md](cli.md)、同期の成否は [ingest-sync.md](ingest-sync.md)、プロセス境界は [architecture.md](../../local-council-docs/architecture.md) を正とします。いま実装されている範囲は [status.md](../../local-council-docs/status.md) を正とします。
 
 関連:
 
-- 実装状況 → [status.md](status.md)
-- プロセス分離、障害分離 → [architecture.md](architecture.md)
+- 実装状況 → [status.md](../../local-council-docs/status.md)
+- プロセス分離、障害分離 → [architecture.md](../../local-council-docs/architecture.md)
 - 初回同期・増分同期・lookback → [ingest-sync.md](ingest-sync.md)
 - 対象自治体 → [sources.md](sources.md)
 - CLI の引数と終了コード → [cli.md](cli.md)
@@ -40,7 +40,7 @@ local-council-system/        本リポジトリ
 local-council-api/           配布。本リポジトリはここへ SQLite を渡すだけ
 ```
 
-`config/sources/{municipalityCode}.yaml` がある自治体だけを対象にする。実装済みの一覧は [status.md](status.md) を正とする。
+`config/sources/{municipalityCode}.yaml` がある自治体だけを対象にする。実装済みの一覧は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## 日常の流れ
 
@@ -52,7 +52,7 @@ local-council-api/           配布。本リポジトリはここへ SQLite を�
 5. 生成した SQLite を local-council-api へ渡す
 ```
 
-Collector は Canonical JSON までを書く。Git commit と Pull Request は本 CLI に含めない。実装状況は [status.md](status.md) を正とする。
+Collector は Canonical JSON までを書く。Git commit と Pull Request は本 CLI に含めない。実装状況は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## collect
 
@@ -62,7 +62,7 @@ Collector は Canonical JSON までを書く。Git commit と Pull Request は�
 uv run local-council-system collect --municipality 341002
 ```
 
-`--all` は未実装である。実装済みの自治体は 1 件ずつ起動する。対象コードは [status.md](status.md) を正とする。
+`--all` は未実装である。実装済みの自治体は 1 件ずつ起動する。対象コードは [status.md](../../local-council-docs/status.md) を正とする。
 
 試行（期間・件数・会議 ID の絞り込み、`--discover-only`）は Adapter の確認と負荷抑制に使う。成功しても `lastSuccessfulSync` を更新しない。引数の意味は [cli.md](cli.md) を正とする。
 
@@ -92,7 +92,7 @@ uv run local-council-system build-db
 uv run local-council-system build-db --data-root ../local-council-data --output var/search.sqlite
 ```
 
-生成は一時ファイルへ行い、成功後に本番ファイルへ置換する。失敗した中間ファイルを API へ渡してはならない。方式は [architecture.md](architecture.md) を正とする。
+生成は一時ファイルへ行い、成功後に本番ファイルへ置換する。失敗した中間ファイルを API へ渡してはならない。方式は [architecture.md](../../local-council-docs/architecture.md) を正とする。
 
 入力は、運用上は data リポジトリの main（またはそれに相当する checkout）とする。未マージの作業ツリーだけを本番 SQLite の入力にしてはならない。
 
@@ -149,7 +149,7 @@ collect と build-db を 1 プロセスにまとめない。collect が失敗し
 
 ### 件数が急減した、発言が空になった
 
-既存会議の発言数が急減した場合、または `speeches = []` になった場合は原則として異常とする。その差分を data の main へ載せない。CI Validation の方針は [architecture.md](architecture.md) を正とする。
+既存会議の発言数が急減した場合、または `speeches = []` になった場合は原則として異常とする。その差分を data の main へ載せない。CI Validation の方針は [architecture.md](../../local-council-docs/architecture.md) を正とする。
 
 ### build-db が失敗した
 
@@ -181,7 +181,7 @@ collect と build-db を 1 プロセスにまとめない。collect が失敗し
 
 ## ログ
 
-ログは標準エラーへ出す。Collector と Database Builder が最低限出す項目は [architecture.md](architecture.md) と [cli.md](cli.md) を正とする。
+ログは標準エラーへ出す。Collector と Database Builder が最低限出す項目は [architecture.md](../../local-council-docs/architecture.md) と [cli.md](cli.md) を正とする。
 
 運用で見るもの:
 

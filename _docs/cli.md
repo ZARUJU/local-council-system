@@ -1,14 +1,14 @@
 # CLI
 
-この文書は、local-council-system のコマンドラインインタフェースを定義します。収集範囲と同期成否は [ingest-sync.md](ingest-sync.md)、対象自治体と実装タイプは [sources.md](sources.md)、プロセス分離は [architecture.md](architecture.md) を参照してください。いま実装されているコマンドとオプションは [status.md](status.md) を正とします。HTTP API の起動は `local-council-api` の cli.md を正とします。
+この文書は、local-council-system のコマンドラインインタフェースを定義します。収集範囲と同期成否は [ingest-sync.md](ingest-sync.md)、対象自治体と実装タイプは [sources.md](sources.md)、プロセス分離は [architecture.md](../../local-council-docs/architecture.md) を参照してください。いま実装されているコマンドとオプションは [status.md](../../local-council-docs/status.md) を正とします。HTTP API の起動は `local-council-api` の cli.md を正とします。
 
 関連:
 
-- 実装状況 → [status.md](status.md)
-- Collector / Database Builder の責務 → [architecture.md](architecture.md)
+- 実装状況 → [status.md](../../local-council-docs/status.md)
+- Collector / Database Builder の責務 → [architecture.md](../../local-council-docs/architecture.md)
 - 初回同期・増分同期・lookback → [ingest-sync.md](ingest-sync.md)
 - 自治体ごとの公開形態と収集可否 → [sources.md](sources.md)
-- Canonical JSON の出力形 → [data.md](data.md)
+- Canonical JSON の出力形 → [data.md](../../local-council-docs/data.md)
 - 日々の起動と失敗時の対処 → [operation.md](operation.md)
 - API Server の起動 → `local-council-api` の cli.md
 - 文書の読み順と優先関係 → [README.md](README.md)
@@ -74,7 +74,7 @@ Canonical JSON の上書き、SQLite の全再構築、HTTP キャッシュの�
 | `collect` | Collector Job | DISCOVER から EXPORT まで |
 | `build-db` | Database Builder Job | Canonical JSON から検索用 SQLite を全再構築 |
 
-`serve` は本 CLI に含めない。API の起動は `local-council-api serve` である。実装の有無は [status.md](status.md) を正とする。
+`serve` は本 CLI に含めない。API の起動は `local-council-api serve` である。実装の有無は [status.md](../../local-council-docs/status.md) を正とする。
 
 ヘルプ:
 
@@ -107,7 +107,7 @@ local-council-system collect -h
 local-council-system collect --municipality <code> [options]
 ```
 
-処理段階は次とする。詳細は [architecture.md](architecture.md) と [ingest-sync.md](ingest-sync.md) を正とする。
+処理段階は次とする。詳細は [architecture.md](../../local-council-docs/architecture.md) と [ingest-sync.md](ingest-sync.md) を正とする。
 
 ```text
 DISCOVER → FETCH → PARSE → NORMALIZE → VALIDATE → EXPORT
@@ -122,7 +122,7 @@ DISCOVER → FETCH → PARSE → NORMALIZE → VALIDATE → EXPORT
 | `--municipality <code>` | 全国地方公共団体コード 1 件。例: `341002` |
 | `--all` | `config/sources/` にある全自治体 |
 
-`--all` と `--adapter` の実装状況は [status.md](status.md) を正とする。未実装の間は `--municipality` を必須とする。
+`--all` と `--adapter` の実装状況は [status.md](../../local-council-docs/status.md) を正とする。未実装の間は `--municipality` を必須とする。
 
 将来、収集元製品で絞る場合は次を追加してよい。
 
@@ -175,7 +175,7 @@ CLI で上書きできる範囲は次とする。
 | --- | --- | --- |
 | `--data-root <path>` | 設定の `export.dataRoot`（広島市は `../local-council-data`） | Canonical JSON と収集カーソルのルート |
 
-ファイル配置は [data.md](data.md) に従う。
+ファイル配置は [data.md](../../local-council-docs/data.md) に従う。
 
 ```text
 {dataRoot}/
@@ -262,7 +262,7 @@ local-council-system collect --municipality 341002
 
 広島市の初期設定では 2025年以降の本会議が対象である。件数が多いため、Adapter が安定するまでは `--limit` 付きの試行を先に使う。
 
-`--all` の呼び出しは [status.md](status.md) を正とする。
+`--all` の呼び出しは [status.md](../../local-council-docs/status.md) を正とする。
 
 ## build-db
 
@@ -280,7 +280,7 @@ local-council-system build-db [options]
 
 入力は Collector の作業用 SQLite ではない。Git 上の Canonical JSON、またはそれに相当する `data-root` である。
 
-生成は一時ファイルへ行い、成功後に本番ファイルへ置換する。詳細は [architecture.md](architecture.md) を正とする。配布側が読むパスは、運用で `local-council-api serve --database` に渡す。
+生成は一時ファイルへ行い、成功後に本番ファイルへ置換する。詳細は [architecture.md](../../local-council-docs/architecture.md) を正とする。配布側が読むパスは、運用で `local-council-api serve --database` に渡す。
 
 ## 終了コード
 
@@ -372,4 +372,4 @@ var/
 | `var/canonical/` | 開発時の JSON 出力（旧既定） | 消してよい。正本は `../local-council-data` |
 | `var/search.sqlite` | 検索用 SQLite（`build-db` の既定出力） | 消してよい。Canonical JSON から再生成する |
 
-対話モード、進捗バー、並列実行、認証情報を引数で受け取るオプションなど、CLI に含めない事項は [status.md](status.md) を正とする。
+対話モード、進捗バー、並列実行、認証情報を引数で受け取るオプションなど、CLI に含めない事項は [status.md](../../local-council-docs/status.md) を正とする。

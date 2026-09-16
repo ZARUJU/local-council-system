@@ -1,13 +1,13 @@
 # 収集元
 
-この文書は、対象自治体ごとの会議録公開形態、実装タイプ、収集方針を定義する。同期の時期は [ingest-sync.md](ingest-sync.md)、CLI の起動方法は [cli.md](cli.md)、プロセス境界は [architecture.md](architecture.md) を参照する。Adapter の実装状況と現在の収集範囲は [status.md](status.md) を正とする。
+この文書は、対象自治体ごとの会議録公開形態、実装タイプ、収集方針を定義する。同期の時期は [ingest-sync.md](ingest-sync.md)、CLI の起動方法は [cli.md](cli.md)、プロセス境界は [architecture.md](../../local-council-docs/architecture.md) を参照する。Adapter の実装状況と現在の収集範囲は [status.md](../../local-council-docs/status.md) を正とする。
 
 関連:
 
-- 実装状況 → [status.md](status.md)
-- Collector の DISCOVER / FETCH → [architecture.md](architecture.md)
+- 実装状況 → [status.md](../../local-council-docs/status.md)
+- Collector の DISCOVER / FETCH → [architecture.md](../../local-council-docs/architecture.md)
 - 初回同期・増分同期・lookback → [ingest-sync.md](ingest-sync.md)
-- Meeting / Speech の公開 ID → [id.md](id.md)
+- Meeting / Speech の公開 ID → [id.md](../../local-council-docs/id.md)
 - 文書の読み順と優先関係 → [README.md](README.md)
 
 ## 目次
@@ -56,7 +56,7 @@ Adapter は自治体ごと、収集元システムごとに置く。この文書
 
 `js-internal-json` は、利用者が画面上で読めることと、Collector が同じ内容を公開 HTTP として取得できることが一致しない。Discuss 以外の SPA には Adapter を置かない。
 
-`pdf` は OCR やページ単位の解析が必要なため、当面は対象外とする。実装しない機能の一覧は [status.md](status.md) を正とする。
+`pdf` は OCR やページ単位の解析が必要なため、当面は対象外とする。実装しない機能の一覧は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## 収集してよい原資料
 
@@ -85,7 +85,7 @@ HTTP の間隔、User-Agent、キャッシュは各自治体設定の `http` 節
 
 ## 対象自治体
 
-設定ファイルは `config/sources/{municipalityCode}.yaml` とする。本表に収集不可と書いた自治体には、その yaml も Adapter も置かない。実装の有無は [status.md](status.md) を正とする。
+設定ファイルは `config/sources/{municipalityCode}.yaml` とする。本表に収集不可と書いた自治体には、その yaml も Adapter も置かない。実装の有無は [status.md](../../local-council-docs/status.md) を正とする。
 
 | コード | 自治体 | 実装タイプ | `source.system` | adapter | 収集 |
 | --- | --- | --- | --- | --- | --- |
@@ -131,7 +131,7 @@ adapter: hiroshima-voices
 
 Q'z Creative の VOICES。一覧（`ACT=100`）と本文（`ACT=203`）は CGI の HTML 応答に含まれる。
 
-1 Meeting は会期全体ではなく、日程・号である。Meeting Identity の収集元キーは `FINO`、Speech Identity は `HUID` とする。公開 ID の生成規則は [id.md](id.md) を正とする。
+1 Meeting は会期全体ではなく、日程・号である。Meeting Identity の収集元キーは `FINO`、Speech Identity は `HUID` とする。公開 ID の生成規則は [id.md](../../local-council-docs/id.md) を正とする。
 
 ```text
 Meeting Identity  = 341002:voices:{FINO}
@@ -140,7 +140,7 @@ Speech Identity   = source:{HUID}
 
 `KGTP` は会議種類のフィルタであり、公開 ID には使わない。委員会名は原典の表記を保持する。現行名称へ正規化しない。
 
-対象は本会議と、委員会閲覧画面に載っている個別委員会である。「すべて表示」のような集約一覧は DISCOVER しない。年次などの収集範囲は [status.md](status.md) を正とする。
+対象は本会議と、委員会閲覧画面に載っている個別委員会である。「すべて表示」のような集約一覧は DISCOVER しない。年次などの収集範囲は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## 広島県議会
 
@@ -164,7 +164,7 @@ Meeting Identity  = 340006:dbsr:{DocumentID}
 Speech Identity   = source:{VoiceID}
 ```
 
-対象は本会議の本文のみ。委員会は後続とする。年次は [status.md](status.md) を正とする。
+対象は本会議の本文のみ。委員会は後続とする。年次は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## Discuss
 
@@ -207,7 +207,7 @@ tenant:
 | `345458` | 神石高原町 | jinsekikougen | 403 |
 | `382019` | 松山市 | matsuyama | 279 |
 
-年次は [status.md](status.md) を正とする。
+年次は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## 神戸市
 
@@ -237,7 +237,7 @@ DISCOVER 対象の例（令和7年第1回定例市会 第6日 本文）は `Id=2
 
 検索結果一覧は HTTP GET で取る。2 ページ目以降は同じ一覧 URL に `Page` を付けて辿る。画面上のページ送りは POST だが、GET でも同じ HTML が返る。CSRF 付き POST は使わない。
 
-年次、委員会の収集範囲は [status.md](status.md) を正とする。
+年次、委員会の収集範囲は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## 廿日市市
 
@@ -261,7 +261,7 @@ Meeting Identity  = 342131:dbsr:{DocumentID}
 Speech Identity   = source:{data-voiceno}
 ```
 
-年次は [status.md](status.md) を正とする。
+年次は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## kensakusystem.jp
 
@@ -291,7 +291,7 @@ Speech Identity   = source:{発言順}
 | `342114` | 大竹市 | otake |
 | `342149` | 安芸高田市 | akitakata |
 
-年次は [status.md](status.md) を正とする。
+年次は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## 松山市
 
@@ -306,7 +306,7 @@ adapter: discuss
 
 松山市公式 FAQ も `https://ssp.kaigiroku.net/tenant/matsuyama/pg/index.html` を案内する。画面上の製品名は Discuss。広島県内の Discuss と同じ閲覧 JSON 3 経路と `DiscussAdapter` を使う。`tenantId` は 279、`tenantSlug` は `matsuyama`。
 
-対象は本会議の日程・号のみ。委員会・資料・名簿は対象外である。年次は [status.md](status.md) を正とする。
+対象は本会議の日程・号のみ。委員会・資料・名簿は対象外である。年次は [status.md](../../local-council-docs/status.md) を正とする。
 
 ## 広島県内の見送り
 
@@ -339,4 +339,4 @@ PDF を避ける方針は維持する。HTML または Discuss 閲覧 JSON で�
 - Discuss: 広島県内 7 自治体と松山市で成立した。`DiscussAdapter` を共有し、`tenantId` / `tenantSlug` を yaml に置く
 - kensakusystem: 府中市・大竹市・安芸高田市で成立した。`KensakuSystemAdapter` を共有し、`baseUrl` の slug で差を yaml に置く
 
-収集不可の自治体は、その比較対象に数えない。実装済みの Adapter 数は [status.md](status.md) を正とする。
+収集不可の自治体は、その比較対象に数えない。実装済みの Adapter 数は [status.md](../../local-council-docs/status.md) を正とする。

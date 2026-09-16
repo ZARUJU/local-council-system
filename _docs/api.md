@@ -4,4 +4,4 @@ HTTP API の外部契約は sibling リポジトリ `local-council-api` の [`_d
 
 本リポジトリは収集と検索用 SQLite の生成までを担う。API Server は生成した SQLite を読み取り専用で配布する。
 
-Canonical / SQLite / API のフィールド対応は [data.md](data.md) を参照する。公開 ID は [id.md](id.md) を参照する。
+Canonical / SQLite / API のフィールド対応は [data.md](../../local-council-docs/data.md) を参照する。公開 ID は [id.md](../../local-council-docs/id.md) を参照する。

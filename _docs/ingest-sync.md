@@ -1,13 +1,13 @@
 # 収集・同期
 
-この文書は、定期収集における収集状態、初回同期、増分同期、および同期成功条件を定義します。Collector の処理段階（DISCOVER から EXPORT）とプロセス上の位置づけは [architecture.md](architecture.md) を参照してください。実装の有無は [status.md](status.md) を正とします。
+この文書は、定期収集における収集状態、初回同期、増分同期、および同期成功条件を定義します。Collector の処理段階（DISCOVER から EXPORT）とプロセス上の位置づけは [architecture.md](../../local-council-docs/architecture.md) を参照してください。実装の有無は [status.md](../../local-council-docs/status.md) を正とします。
 
 関連:
 
-- 実装状況 → [status.md](status.md)
-- Collector Job の段階と作業用 SQLite → [architecture.md](architecture.md)
+- 実装状況 → [status.md](../../local-council-docs/status.md)
+- Collector Job の段階と作業用 SQLite → [architecture.md](../../local-council-docs/architecture.md)
 - 対象自治体と実装タイプ → [sources.md](sources.md)
-- EXPORT する Canonical JSON → [data.md](data.md)
+- EXPORT する Canonical JSON → [data.md](../../local-council-docs/data.md)
 - Collector の起動方法 → [cli.md](cli.md)
 - 日々の起動と失敗時の対処 → [operation.md](operation.md)
 - 文書の読み順と優先関係 → [README.md](README.md)
@@ -361,4 +361,4 @@ async def collect_municipality(
 
 実際の実装では、例外の握り潰しを避け、失敗対象をログへ記録する。
 
-再開カーソル、ETag によるスキップ、`partial` 状態など、本仕様が必須としない事項の実装状況は [status.md](status.md) を正とする。
+再開カーソル、ETag によるスキップ、`partial` 状態など、本仕様が必須としない事項の実装状況は [status.md](../../local-council-docs/status.md) を正とする。
